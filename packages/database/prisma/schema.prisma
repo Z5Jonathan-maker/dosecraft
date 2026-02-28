@@ -189,11 +189,13 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  profile        UserProfile?
-  creator        Creator?
-  protocols      UserProtocol[]
-  outcomeMetrics OutcomeMetric[]
-  subscription   Subscription?
+  profile           UserProfile?
+  creator           Creator?
+  protocols         UserProtocol[]
+  outcomeMetrics    OutcomeMetric[]
+  subscription      Subscription?
+  conversations     Conversation[]
+  insightSnapshots  InsightSnapshot[]
 
   @@index([email])
   @@map("users")
@@ -499,4 +501,52 @@ model Embedding {
   createdAt  DateTime                    @default(now())
 
   @@map("embeddings")
+}
+
+// ============================================================================
+// COACH CHAT
+// ============================================================================
+
+model Conversation {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@index([userId])
+  @@map("conversations")
+}
+
+model ChatMessage {
+  id             String   @id @default(uuid()) @db.Uuid
+  conversationId String   @db.Uuid
+  role           String   // 'user' | 'assistant'
+  content        String
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("chat_messages")
+}
+
+// ============================================================================
+// INSIGHT SNAPSHOTS
+// ============================================================================
+
+model InsightSnapshot {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  type      String   // 'weekly' | 'monthly' | 'protocol_review'
+  payload   Json
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@map("insight_snapshots")
 }

@@ -42,6 +42,22 @@ export class InsightService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  async createInsightSnapshot(
+    userId: string,
+    type: 'weekly' | 'monthly' | 'protocol_review',
+    payload: Record<string, unknown>,
+  ): Promise<string> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const snapshot = await this.prisma.insightSnapshot.create({
+      data: {
+        userId,
+        type,
+        payload: payload as any,
+      },
+    });
+    return snapshot.id;
+  }
+
   async getUserInsights(userId: string): Promise<UserInsights> {
     const [activeProtocols, totalDoses, totalOutcomes, recentEvents, outcomes] =
       await Promise.all([

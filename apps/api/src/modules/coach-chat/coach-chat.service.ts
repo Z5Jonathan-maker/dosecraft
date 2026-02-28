@@ -13,9 +13,6 @@ export interface ChatResponse {
   readonly conversationId: string;
 }
 
-/** In-memory conversation store (schema has no chat/conversation models yet) */
-const conversationStore = new Map<string, { userId: string; messages: ChatMessage[] }>();
-
 @Injectable()
 export class CoachChatService {
   private readonly logger = new Logger(CoachChatService.name);
@@ -30,21 +27,32 @@ export class CoachChatService {
     message: string,
     conversationId?: string,
   ): Promise<ChatResponse> {
-    // 1. Load or create conversation (in-memory until schema has chat tables)
-    const convId = conversationId ?? `conv_${userId}_${Date.now()}`;
-    const conversation = conversationStore.get(convId) ?? { userId, messages: [] as ChatMessage[] };
-    if (!conversationStore.has(convId)) {
-      conversationStore.set(convId, conversation);
+    // 1. Load or create conversation
+    let conversation = conversationId
+      ? await this.prisma.conversation.findUnique({
+          where: { id: conversationId },
+          include: { messages: { orderBy: { createdAt: 'asc' } } },
+        })
+      : null;
+
+    if (!conversation) {
+      conversation = await this.prisma.conversation.create({
+        data: {
+          userId,
+          title: null,
+        },
+        include: { messages: { orderBy: { createdAt: 'asc' } } },
+      });
     }
 
     // 2. Retrieve RAG context based on user's protocols and the question
     const ragContext = await this.retrieveContext(userId, message);
 
     // 3. Build conversation history with RAG context
-    const history: ChatMessage[] = [
-      ...conversation.messages,
-      { role: 'user', content: message },
-    ];
+    const history: ChatMessage[] = conversation.messages.map((m) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+    }));
 
     // 4. Get AI response
     const aiResponse = await this.aiService.chat(userId, message, [
@@ -52,23 +60,33 @@ export class CoachChatService {
         role: 'system',
         content: this.buildSystemPrompt(ragContext),
       },
-      ...history.map((m) => ({ role: m.role, content: m.content })),
+      ...history,
     ]);
 
-    // 5. Persist messages in-memory
-    conversation.messages.push(
-      { role: 'user', content: message },
-      { role: 'assistant', content: aiResponse.message },
-    );
+    // 5. Persist messages in database
+    await this.prisma.chatMessage.createMany({
+      data: [
+        {
+          conversationId: conversation.id,
+          role: 'user',
+          content: message,
+        },
+        {
+          conversationId: conversation.id,
+          role: 'assistant',
+          content: aiResponse.message,
+        },
+      ],
+    });
 
     this.logger.debug(
-      `Chat processed for user ${userId}, conversation ${convId}`,
+      `Chat processed for user ${userId}, conversation ${conversation.id}`,
     );
 
     return {
       reply: aiResponse.message,
       citations: aiResponse.citations,
-      conversationId: convId,
+      conversationId: conversation.id,
     };
   }
 
