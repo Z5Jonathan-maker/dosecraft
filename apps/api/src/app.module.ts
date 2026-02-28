@@ -10,6 +10,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { CoachChatModule } from './modules/coach-chat/coach-chat.module';
 import { InsightModule } from './modules/insight/insight.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -28,5 +29,6 @@ import { BillingModule } from './modules/billing/billing.module';
     InsightModule,
     BillingModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}
