@@ -1,157 +1,161 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, Beaker } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FlaskConical, Menu, X, ArrowRight } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import clsx from "clsx";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const NAV_LINKS = [
-  { label: "Problem", href: "#problem" },
-  { label: "Solution", href: "#solution" },
   { label: "Features", href: "#features" },
-  { label: "Evidence", href: "#lanes" },
+  { label: "Lanes", href: "#lanes" },
   { label: "Pricing", href: "#pricing" },
 ];
 
 export default function Nav() {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const prefersReduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (!navRef.current) return;
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 40);
+    };
 
-    /* Scroll-based background transition with GSAP */
-    if (!prefersReduced) {
-      ScrollTrigger.create({
-        trigger: document.body,
-        start: "40px top",
-        onEnter: () => setScrolled(true),
-        onLeaveBack: () => setScrolled(false),
-      });
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
-      /* Initial reveal */
+    if (!prefersReduced && navRef.current) {
       gsap.fromTo(
         navRef.current,
-        { y: -20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" }
+        { opacity: 0, y: -16 },
+        { opacity: 1, y: 0, duration: 0.7, ease: "power3.out", delay: 0.1 }
       );
     }
 
-    return () => {
-      ScrollTrigger.getAll()
-        .filter(
-          (st) =>
-            st.trigger === document.body && st.vars.start === "40px top"
-        )
-        .forEach((st) => st.kill());
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleNavClick = (href: string) => {
+    setMobileOpen(false);
+    const el = document.querySelector(href);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
-    <nav
-      ref={navRef}
-      className={clsx(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        scrolled
-          ? "bg-dc-bg/80 backdrop-blur-xl border-b border-dc-border/50 shadow-lg shadow-black/20"
-          : "bg-transparent"
-      )}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-18">
-          {/* Logo */}
-          <a href="#" className="flex items-center gap-2.5 group">
-            <div className="relative">
-              <Beaker className="w-7 h-7 text-dc-orange transition-transform duration-300 group-hover:scale-110" />
-              <div className="absolute inset-0 bg-dc-orange/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <span className="text-lg font-bold font-[family-name:var(--font-space)] tracking-tight">
-              <span className="text-dc-text">Dose</span>
-              <span className="text-dc-orange">Craft</span>
-            </span>
-          </a>
-
-          {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-1">
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="px-3.5 py-2 text-sm text-dc-text-muted hover:text-dc-text transition-colors duration-200 rounded-lg hover:bg-white/[0.03]"
-              >
-                {link.label}
-              </a>
-            ))}
-          </div>
-
-          {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-3">
-            <a
-              href="#waitlist"
-              className="btn-primary text-sm px-5 py-2.5 inline-flex items-center"
-            >
-              Join Waitlist
+    <>
+      <nav
+        ref={navRef}
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
+        style={{
+          background: scrolled ? "rgba(5, 5, 8, 0.88)" : "transparent",
+          backdropFilter: scrolled ? "blur(20px) saturate(180%)" : "none",
+          WebkitBackdropFilter: scrolled ? "blur(20px) saturate(180%)" : "none",
+          borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "1px solid transparent",
+          boxShadow: scrolled ? "0 4px 32px rgba(0,0,0,0.4)" : "none",
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <a href="/" className="flex items-center gap-2.5 group">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-dc-orange to-dc-orange/70 flex items-center justify-center shadow-lg shadow-dc-orange/30 group-hover:shadow-dc-orange/50 transition-shadow">
+                <FlaskConical className="w-4 h-4 text-white" strokeWidth={2.2} />
+              </div>
+              <span className="font-[family-name:var(--font-space)] font-bold text-lg text-dc-text tracking-tight">
+                DoseCraft
+              </span>
             </a>
+
+            {/* Desktop links */}
+            <div className="hidden md:flex items-center gap-1">
+              {NAV_LINKS.map((link) => (
+                <button
+                  key={link.href}
+                  onClick={() => handleNavClick(link.href)}
+                  className="px-4 py-2 text-sm font-medium text-dc-text-muted hover:text-dc-text transition-colors rounded-lg hover:bg-white/[0.04] cursor-pointer"
+                >
+                  {link.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Desktop CTA */}
+            <div className="hidden md:flex items-center gap-3">
+              <a
+                href="https://dosecraft-web.vercel.app/auth"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary inline-flex items-center gap-1.5 group"
+                style={{ padding: "10px 20px", fontSize: "0.875rem" }}
+              >
+                Get Started
+                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+              </a>
+            </div>
+
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setMobileOpen((v) => !v)}
+              className="md:hidden p-2 rounded-xl text-dc-text-muted hover:text-dc-text hover:bg-white/[0.06] transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
-
-          {/* Mobile Menu Toggle */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 text-dc-text-muted hover:text-dc-text transition-colors"
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
-          </button>
         </div>
-      </div>
+      </nav>
 
-      {/* Mobile Menu */}
+      {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25 }}
-            className="md:hidden bg-dc-bg/95 backdrop-blur-xl border-b border-dc-border/50 overflow-hidden"
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed top-16 left-0 right-0 z-40 overflow-hidden"
+            style={{
+              background: "rgba(5, 5, 8, 0.97)",
+              backdropFilter: "blur(24px)",
+              borderBottom: "1px solid rgba(255,255,255,0.06)",
+            }}
           >
-            <div className="px-4 py-4 space-y-1">
-              {NAV_LINKS.map((link) => (
-                <a
+            <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
+              {NAV_LINKS.map((link, i) => (
+                <motion.button
                   key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="block px-4 py-2.5 text-sm text-dc-text-muted hover:text-dc-text hover:bg-white/[0.03] rounded-lg transition-colors"
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  onClick={() => handleNavClick(link.href)}
+                  className="w-full text-left px-4 py-3 text-sm font-medium text-dc-text-muted hover:text-dc-text rounded-xl hover:bg-white/[0.04] transition-colors"
                 >
                   {link.label}
-                </a>
+                </motion.button>
               ))}
-              <div className="pt-3 px-4">
+              <div className="pt-2 pb-1">
                 <a
-                  href="#waitlist"
+                  href="https://dosecraft-web.vercel.app/auth"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary text-sm w-full flex items-center justify-center gap-2"
+                  style={{ padding: "12px 20px" }}
                   onClick={() => setMobileOpen(false)}
-                  className="btn-primary text-sm px-5 py-2.5 inline-flex items-center w-full justify-center"
                 >
-                  Join Waitlist
+                  Get Started
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </a>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </nav>
+    </>
   );
 }

@@ -1,77 +1,83 @@
 "use client";
 
 import { useRef, type ReactNode, type MouseEvent } from "react";
+import gsap from "gsap";
 
 interface TiltCardProps {
   children: ReactNode;
   className?: string;
+  maxTilt?: number;
   glowColor?: string;
-  tiltIntensity?: number;
 }
 
 export default function TiltCard({
   children,
   className = "",
-  glowColor = "rgba(255,107,53,0.15)",
-  tiltIntensity = 10,
+  maxTilt = 8,
+  glowColor = "rgba(255, 107, 53, 0.15)",
 }: TiltCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
 
-  function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
-    if (!cardRef.current) return;
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    const el = cardRef.current;
+    if (!el) return;
 
-    const prefersReduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-    if (prefersReduced) return;
+    const rect = el.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
 
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
+    const tiltX = (y - 0.5) * -maxTilt * 2;
+    const tiltY = (x - 0.5) * maxTilt * 2;
 
-    const rotateX = ((y - centerY) / centerY) * -tiltIntensity;
-    const rotateY = ((x - centerX) / centerX) * tiltIntensity;
+    gsap.to(el, {
+      rotateX: tiltX,
+      rotateY: tiltY,
+      duration: 0.4,
+      ease: "power2.out",
+      transformPerspective: 1000,
+    });
 
-    cardRef.current.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-    cardRef.current.style.setProperty(
-      "--glow-x",
-      `${(x / rect.width) * 100}%`
-    );
-    cardRef.current.style.setProperty(
-      "--glow-y",
-      `${(y / rect.height) * 100}%`
-    );
-  }
+    // Update glow position CSS variables
+    el.style.setProperty("--glow-x", `${x * 100}%`);
+    el.style.setProperty("--glow-y", `${y * 100}%`);
+  };
 
-  function handleMouseLeave() {
-    if (!cardRef.current) return;
-    cardRef.current.style.transform =
-      "perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)";
-  }
+  const handleMouseLeave = () => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    gsap.to(el, {
+      rotateX: 0,
+      rotateY: 0,
+      duration: 0.6,
+      ease: "power3.out",
+    });
+
+    el.style.setProperty("--glow-x", "50%");
+    el.style.setProperty("--glow-y", "50%");
+  };
 
   return (
     <div
       ref={cardRef}
-      className={`tilt-card relative transition-transform duration-300 ease-out ${className}`}
+      className={`tilt-card ${className}`}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      style={
-        {
-          "--glow-color": glowColor,
-          willChange: "transform",
-        } as React.CSSProperties
-      }
+      style={{
+        transformStyle: "preserve-3d",
+        willChange: "transform",
+      }}
     >
-      {/* Mouse-following glow */}
+      {/* Radial glow that follows cursor */}
       <div
-        className="absolute inset-0 rounded-2xl opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         style={{
-          background: `radial-gradient(circle at var(--glow-x, 50%) var(--glow-y, 50%), ${glowColor}, transparent 60%)`,
+          background: `radial-gradient(circle at var(--glow-x, 50%) var(--glow-y, 50%), ${glowColor} 0%, transparent 60%)`,
+          zIndex: 0,
+          borderRadius: "inherit",
         }}
       />
-      {children}
+      <div className="relative z-10 h-full">{children}</div>
     </div>
   );
 }

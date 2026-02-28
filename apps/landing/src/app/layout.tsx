@@ -17,20 +17,23 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "DoseCraft — Peptide Protocol Lab for Serious Biohackers",
   description:
-    "Track every pin, dose, and result. Three evidence lanes. AI-powered protocol engineering. Built for lifters, hybrid athletes, and biohackers who demand precision.",
+    "Your private protocol war room. Three evidence lanes (Clinical, Expert, Experimental), AI protocol engine, creator marketplace, and precision dose tracking. Built for biohackers who demand transparency.",
   keywords: [
     "peptide protocols",
     "biohacking",
     "peptide tracking",
     "BPC-157",
+    "TB-500",
     "peptide stacks",
     "protocol builder",
     "dose tracker",
+    "biohacker app",
+    "peptide research",
   ],
   openGraph: {
     title: "DoseCraft — Peptide Protocol Lab",
     description:
-      "Run peptide stacks like the pros. Three evidence lanes, AI protocol builder, full tracking.",
+      "Three evidence lanes. AI protocol engine. Creator marketplace. The evolution of peptide biohacking.",
     type: "website",
     locale: "en_US",
     siteName: "DoseCraft",
@@ -39,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "DoseCraft — Peptide Protocol Lab",
     description:
-      "Run peptide stacks like the pros. Three evidence lanes, AI protocol builder, full tracking.",
+      "Three evidence lanes. AI protocol engine. Creator marketplace. The evolution of peptide biohacking.",
   },
   robots: {
     index: true,

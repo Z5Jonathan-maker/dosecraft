@@ -1,89 +1,124 @@
 "use client";
 
-import { Beaker, Github, Twitter } from "lucide-react";
+import { FlaskConical, Twitter, Github, ExternalLink } from "lucide-react";
 
-const FOOTER_LINKS = [
+const FOOTER_SECTIONS = [
   {
-    heading: "Product",
+    title: "Product",
     links: [
       { label: "Features", href: "#features" },
       { label: "Evidence Lanes", href: "#lanes" },
       { label: "Pricing", href: "#pricing" },
+      { label: "Protocol Marketplace", href: "#" },
       { label: "Waitlist", href: "#waitlist" },
     ],
   },
   {
-    heading: "Company",
+    title: "Company",
     links: [
       { label: "About", href: "#" },
       { label: "Blog", href: "#" },
-      { label: "Docs", href: "#" },
       { label: "Careers", href: "#" },
+      { label: "Contact", href: "#" },
     ],
   },
   {
-    heading: "Legal",
+    title: "Legal",
     links: [
       { label: "Privacy Policy", href: "#" },
       { label: "Terms of Service", href: "#" },
+      { label: "Disclaimer", href: "#" },
       { label: "Cookie Policy", href: "#" },
     ],
   },
 ];
 
 export default function Footer() {
+  const handleNavClick = (href: string) => {
+    if (!href.startsWith("#") || href === "#") return;
+    const el = document.querySelector(href);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
-    <footer className="relative border-t border-dc-border/40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-10 lg:gap-12">
-          {/* Brand */}
-          <div className="col-span-2">
-            <a href="#" className="flex items-center gap-2.5 mb-4">
-              <Beaker className="w-6 h-6 text-dc-orange" />
-              <span className="text-lg font-bold font-[family-name:var(--font-space)] tracking-tight">
-                <span className="text-dc-text">Dose</span>
-                <span className="text-dc-orange">Craft</span>
+    <footer className="relative border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+      {/* Subtle top glow */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-px pointer-events-none"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(255,107,53,0.3), transparent)" }}
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Main footer content */}
+        <div className="py-14 sm:py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
+          {/* Brand column */}
+          <div>
+            <a href="/" className="flex items-center gap-2.5 mb-5 group">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-dc-orange to-dc-orange/70 flex items-center justify-center shadow-lg shadow-dc-orange/25 group-hover:shadow-dc-orange/40 transition-shadow">
+                <FlaskConical className="w-4 h-4 text-white" strokeWidth={2.2} />
+              </div>
+              <span className="font-[family-name:var(--font-space)] font-bold text-lg text-dc-text tracking-tight">
+                DoseCraft
               </span>
             </a>
-            <p className="text-sm text-dc-text-muted leading-relaxed max-w-xs">
-              The peptide protocol lab for serious lifters, hybrid athletes, and
-              biohackers. Track every pin, dose, and result.
+            <p className="text-sm text-dc-text-muted leading-relaxed mb-6">
+              Your private protocol war room. Three evidence lanes, AI-powered stacks, creator marketplace.
             </p>
-
-            {/* Social */}
-            <div className="flex items-center gap-3 mt-5">
+            <div className="flex items-center gap-3">
               <a
-                href="#"
-                className="p-2 rounded-lg bg-dc-surface-2 border border-dc-border/30 text-dc-text-muted hover:text-dc-text hover:border-dc-border-light transition-all"
-                aria-label="Twitter"
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-dc-text-muted hover:text-dc-text transition-colors"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}
               >
-                <Twitter className="w-4 h-4" />
+                <Twitter className="w-3.5 h-3.5" />
               </a>
               <a
-                href="#"
-                className="p-2 rounded-lg bg-dc-surface-2 border border-dc-border/30 text-dc-text-muted hover:text-dc-text hover:border-dc-border-light transition-all"
-                aria-label="GitHub"
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-dc-text-muted hover:text-dc-text transition-colors"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}
               >
-                <Github className="w-4 h-4" />
+                <Github className="w-3.5 h-3.5" />
+              </a>
+              <a
+                href="https://dosecraft-web.vercel.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-dc-text-muted hover:text-dc-text transition-colors"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>
           </div>
 
-          {/* Link groups */}
-          {FOOTER_LINKS.map((group) => (
-            <div key={group.heading}>
-              <h4 className="text-sm font-semibold text-dc-text uppercase tracking-wider mb-4">
-                {group.heading}
-              </h4>
+          {/* Link columns */}
+          {FOOTER_SECTIONS.map((section) => (
+            <div key={section.title}>
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-dc-text mb-4">
+                {section.title}
+              </h3>
               <ul className="space-y-2.5">
-                {group.links.map((link) => (
+                {section.links.map((link) => (
                   <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-sm text-dc-text-muted hover:text-dc-text transition-colors"
-                    >
-                      {link.label}
-                    </a>
+                    {link.href.startsWith("#") && link.href !== "#" ? (
+                      <button
+                        onClick={() => handleNavClick(link.href)}
+                        className="text-sm text-dc-text-muted hover:text-dc-text transition-colors cursor-pointer"
+                      >
+                        {link.label}
+                      </button>
+                    ) : (
+                      <a
+                        href={link.href}
+                        className="text-sm text-dc-text-muted hover:text-dc-text transition-colors"
+                      >
+                        {link.label}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -91,19 +126,32 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Bottom */}
-        <div className="mt-12 pt-8 border-t border-dc-border/30">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-dc-text-muted">
-              &copy; {new Date().getFullYear()} DoseCraft. All rights reserved.
-            </p>
-            <p className="text-xs text-dc-text-muted/60 max-w-lg text-center md:text-right leading-relaxed">
-              <strong className="text-dc-text-muted/80">Disclaimer:</strong>{" "}
-              DoseCraft is for educational and research purposes only. Nothing on
-              this platform constitutes medical advice. Consult a licensed
-              healthcare provider before using any peptide or compound.
-            </p>
+        {/* Divider */}
+        <div className="h-px" style={{ background: "rgba(255,255,255,0.05)" }} />
+
+        {/* Bottom row */}
+        <div className="py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-dc-text-muted">
+            &copy; {new Date().getFullYear()} DoseCraft. All rights reserved.
+          </p>
+          <div className="flex items-center gap-1">
+            <span
+              className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+              style={{ background: "rgba(255,107,53,0.1)", color: "rgba(255,107,53,0.8)", border: "1px solid rgba(255,107,53,0.15)" }}
+            >
+              BETA
+            </span>
           </div>
+        </div>
+
+        {/* Legal disclaimer */}
+        <div
+          className="py-5 border-t text-center"
+          style={{ borderColor: "rgba(255,255,255,0.04)" }}
+        >
+          <p className="text-[11px] text-dc-text-muted/50 leading-relaxed max-w-4xl mx-auto">
+            <strong className="text-dc-text-muted/70">Disclaimer:</strong> DoseCraft is an information and personal tracking platform. We do not provide medical advice, diagnosis, or treatment. Peptide regulations vary by jurisdiction — research your local laws before obtaining any research compounds. Always consult a licensed healthcare professional before starting any protocol. Use at your own risk.
+          </p>
         </div>
       </div>
     </footer>
