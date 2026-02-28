@@ -1,72 +1,43 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
-
-interface RequestOptions extends Omit<RequestInit, "body"> {
-  readonly body?: unknown;
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 interface ApiResponse<T> {
-  readonly data: T | null;
-  readonly error: string | null;
-  readonly status: number;
+  readonly success: boolean;
+  readonly data?: T;
+  readonly error?: string;
 }
 
-async function request<T>(
-  endpoint: string,
-  options: RequestOptions = {},
+async function apiFetch<T>(
+  path: string,
+  options: RequestInit = {},
 ): Promise<ApiResponse<T>> {
-  const { body, headers: customHeaders, ...rest } = options;
+  const token = typeof window !== 'undefined'
+    ? localStorage.getItem('dc_token')
+    : null;
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...((customHeaders as Record<string, string>) ?? {}),
-  };
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  });
 
-  // Add auth token if available
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("dosecraft_token")
-      : null;
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    return { success: false, error: body.message ?? res.statusText };
   }
 
-  try {
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      ...rest,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.json().catch(() => null);
-      return {
-        data: null,
-        error: errorBody?.message ?? `Request failed with status ${response.status}`,
-        status: response.status,
-      };
-    }
-
-    const data = (await response.json()) as T;
-    return { data, error: null, status: response.status };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Network error";
-    return { data: null, error: message, status: 0 };
-  }
+  const body = await res.json();
+  return body;
 }
 
 export const api = {
-  get: <T>(endpoint: string, options?: RequestOptions) =>
-    request<T>(endpoint, { ...options, method: "GET" }),
-
-  post: <T>(endpoint: string, body: unknown, options?: RequestOptions) =>
-    request<T>(endpoint, { ...options, method: "POST", body }),
-
-  put: <T>(endpoint: string, body: unknown, options?: RequestOptions) =>
-    request<T>(endpoint, { ...options, method: "PUT", body }),
-
-  patch: <T>(endpoint: string, body: unknown, options?: RequestOptions) =>
-    request<T>(endpoint, { ...options, method: "PATCH", body }),
-
-  delete: <T>(endpoint: string, options?: RequestOptions) =>
-    request<T>(endpoint, { ...options, method: "DELETE" }),
+  get: <T>(path: string) => apiFetch<T>(path),
+  post: <T>(path: string, data: unknown) =>
+    apiFetch<T>(path, { method: 'POST', body: JSON.stringify(data) }),
+  put: <T>(path: string, data: unknown) =>
+    apiFetch<T>(path, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: <T>(path: string) =>
+    apiFetch<T>(path, { method: 'DELETE' }),
 } as const;

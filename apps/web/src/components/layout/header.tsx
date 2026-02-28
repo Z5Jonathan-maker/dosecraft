@@ -1,7 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { Bell, User } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Bell, LogOut } from "lucide-react";
+import { useAuthStore } from "@/stores/auth";
 
 const PAGE_TITLES: Record<string, string> = {
   "/": "Dashboard",
@@ -13,12 +14,23 @@ const PAGE_TITLES: Record<string, string> = {
   "/calculator": "Calculator",
 };
 
-export function Header() {
+interface HeaderProps {
+  readonly user?: { readonly email: string };
+}
+
+export function Header({ user }: HeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useAuthStore();
 
   const title =
     PAGE_TITLES[pathname] ??
     (pathname.startsWith("/library/") ? "Peptide Detail" : "DoseCraft");
+
+  const handleLogout = () => {
+    logout();
+    router.push("/auth");
+  };
 
   return (
     <header className="sticky top-0 z-20 bg-dc-bg/80 backdrop-blur-md border-b border-dc-border">
@@ -31,9 +43,20 @@ export function Header() {
             <Bell className="w-4.5 h-4.5" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-dc-accent rounded-full" />
           </button>
-          <button className="w-8 h-8 rounded-full bg-dc-surface-alt border border-dc-border flex items-center justify-center hover:border-dc-accent transition-colors">
-            <User className="w-4 h-4 text-dc-text-muted" />
-          </button>
+          {user && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-dc-text-muted hidden sm:inline">
+                {user.email}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-lg hover:bg-dc-surface-alt text-dc-text-muted hover:text-dc-danger transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-4.5 h-4.5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
