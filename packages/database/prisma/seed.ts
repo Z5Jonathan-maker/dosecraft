@@ -32,6 +32,9 @@ async function clearDatabase() {
   log('Clearing database...');
 
   // Leaf tables first, then parents
+  await prisma.chatMessage.deleteMany();
+  await prisma.conversation.deleteMany();
+  await prisma.insightSnapshot.deleteMany();
   await prisma.doseLog.deleteMany();
   await prisma.outcomeMetric.deleteMany();
   await prisma.protocolEvent.deleteMany();
@@ -369,7 +372,318 @@ async function seedPeptides() {
   });
   log('  GHK-Cu created');
 
-  return { bpc157, tb500, cjcIpa, semaglutide, ghkCu };
+  // ── PT-141 (Bremelanotide) ───────────────────────────────────────────────
+  const pt141 = await prisma.peptide.create({
+    data: {
+      slug: 'pt-141',
+      name: 'PT-141 (Bremelanotide)',
+      category: 'HORMONE_SUPPORT',
+      route: 'SUBQ',
+      status: 'APPROVED_DRUG',
+      description:
+        'Melanocortin-4 receptor agonist originally developed for sexual dysfunction. Directly activates sexual arousal pathways in the brain without affecting systemic hormones. One of the few peptides with clinical approval.',
+      halfLife: '~30-60 minutes',
+      storageNotes: 'Refrigerate 2-8°C. Protect from light. Use within 60 days reconstituted.',
+      reconstitutionNotes:
+        'Reconstitute with bacteriostatic water. 1.75mg vial + 1ml BAC water = 1.75mg/ml. Inject SubQ or IM.',
+      clinicalLanes: {
+        create: {
+          indication: 'Sexual dysfunction (erectile + arousal)',
+          doseMin: 1.75,
+          doseMax: 1.75,
+          unit: 'mg',
+          frequency: 'as needed, single dose',
+          cycleWeeks: 1,
+          cyclePattern: 'acute use',
+          evidenceLevel: 'RCT',
+          sources: ['doi:10.1177/1359100515593027', 'FDA approval VYLEESI'],
+        },
+      },
+      expertLanes: {
+        create: {
+          description:
+            'Single 0.5-1mg SubQ dose 3-4 hours before desired sexual activity. Use standalone; generally not stacked. Onset ~15min, peak effect 30-60min.',
+          commonStacks: [],
+          dosePattern: {
+            standard: '0.5-1mg SubQ acute',
+            full_dose: '1.75mg SubQ for maximum effect',
+          },
+          sourceTags: ['sex_medicine_md', 'clinic_protocol'],
+        },
+      },
+      experimentalLanes: {
+        create: {
+          description:
+            'Nasal spray compounding for convenience. Microdoses (0.1-0.3mg) reported by some users for baseline mood/arousal lift. Lower microdoses for daily use being explored.',
+          dosePattern: {
+            nasal_spray: '300mcg nasal for same effect as 1mg SubQ',
+            microdose_daily: '100-300mcg SubQ for mood support',
+          },
+          confidence: 0.5,
+          sourceTags: ['reddit_longform', 'n_of_1', 'sex_positive_forum'],
+        },
+      },
+      contraindications: {
+        createMany: {
+          data: [
+            {
+              condition: 'Uncontrolled hypertension (>160/100)',
+              severity: 'HIGH',
+              sourceLane: 'CLINICAL',
+            },
+            {
+              condition: 'Cardiovascular disease or coronary artery disease',
+              severity: 'HIGH',
+              sourceLane: 'CLINICAL',
+            },
+          ],
+        },
+      },
+    },
+  });
+  log('  PT-141 created');
+
+  // ── Selank ──────────────────────────────────────────────────────────────────
+  const selank = await prisma.peptide.create({
+    data: {
+      slug: 'selank',
+      name: 'Selank',
+      category: 'NEURO',
+      route: 'NASAL',
+      status: 'RESEARCH_ONLY',
+      description:
+        'Russian nootropic heptapeptide analogue of tuftsin. Anxiolytic (anxiety-reducing) without sedation. Improves cognitive function and mood. Research-only in Western markets; popular in Russia and Eastern Europe.',
+      halfLife: '~30 minutes (nasal)',
+      storageNotes: 'Refrigerate 2-8°C. Nasal spray stable ~30 days at room temperature.',
+      reconstitutionNotes:
+        'Available as nasal spray (1mg/ml concentration). 20-50mcl per spray. Or SubQ: reconstitute 5mg vial with 10ml BAC water = 500mcg/ml.',
+      clinicalLanes: {
+        create: {
+          indication: 'Anxiety, stress, cognitive performance',
+          doseMin: 250,
+          doseMax: 500,
+          unit: 'mcg',
+          frequency: 'intranasal, 2x daily',
+          cycleWeeks: 4,
+          cyclePattern: '4-8 weeks',
+          evidenceLevel: 'OBSERVATIONAL',
+          sources: ['doi:10.1016/S0924-977X(13)70082-4'],
+        },
+      },
+      expertLanes: {
+        create: {
+          description:
+            'Standard protocol: 300mcg nasal spray 2x/day (AM + midday). Best stacked with Semax for synergistic cognitive enhancement. Non-sedating, useful for daytime use.',
+          commonStacks: ['Semax'],
+          dosePattern: {
+            standard: '300mcg nasal 2x/day',
+            enhanced: '500mcg nasal 2x/day',
+          },
+          sourceTags: ['nootropic_researcher', 'cognitive_coach'],
+        },
+      },
+      experimentalLanes: {
+        create: {
+          description:
+            'SubQ route at 500mcg for systemic delivery. Some protocols use 750mcg nasal for PTSD/trauma work. Longer cycle (8-12 weeks) reported for anxiolytic tolerance.',
+          dosePattern: {
+            subq: '500mcg SubQ daily',
+            high_nasal: '750mcg nasal 2x/day for PTSD',
+          },
+          confidence: 0.4,
+          sourceTags: ['reddit_longform', 'n_of_1', 'neuro_biohacker'],
+        },
+      },
+    },
+  });
+  log('  Selank created');
+
+  // ── Tirzepatide ─────────────────────────────────────────────────────────────
+  const tirzepatide = await prisma.peptide.create({
+    data: {
+      slug: 'tirzepatide',
+      name: 'Tirzepatide',
+      category: 'METABOLIC',
+      route: 'SUBQ',
+      status: 'APPROVED_DRUG',
+      description:
+        'Dual GIP + GLP-1 receptor agonist (newer generation than semaglutide). Superior fat loss and metabolic control. Approved for weight management and type 2 diabetes. SURMOUNT trials show stronger efficacy than semaglutide.',
+      halfLife: '~5 days',
+      storageNotes: 'Refrigerate 2-8°C. Pre-filled pens stable at room temp up to 86 days.',
+      reconstitutionNotes:
+        'Pre-filled pens (2.5mg, 5mg, 7.5mg, 10mg, 12.5mg, 15mg). No reconstitution needed. Or compounded lyophilized per pharmacy instructions.',
+      clinicalLanes: {
+        create: {
+          indication: 'Weight management, type 2 diabetes, metabolic control',
+          doseMin: 2.5,
+          doseMax: 15,
+          unit: 'mg',
+          frequency: 'weekly',
+          cycleWeeks: 34,
+          cyclePattern: '16-52 weeks',
+          evidenceLevel: 'META_ANALYSIS',
+          sources: [
+            'doi:10.1056/NEJMoa2238228',
+            'SURMOUNT-1, SURMOUNT-2, SURMOUNT-3',
+          ],
+        },
+      },
+      expertLanes: {
+        create: {
+          description:
+            'Slow titration protocol: start 2.5mg/week for 4 weeks, advance to 5mg, then 7.5mg, then 10mg. 4 weeks per step to minimize GI side effects. Most users find 7.5-10mg optimal for fat loss.',
+          commonStacks: [],
+          dosePattern: {
+            titration: '2.5 -> 5 -> 7.5 -> 10 -> 12.5 -> 15mg weekly',
+            standard: '7.5-10mg weekly maintenance',
+          },
+          sourceTags: ['obesity_md', 'clinic_protocol'],
+        },
+      },
+      experimentalLanes: {
+        create: {
+          description:
+            'Combination with semaglutide for "dual coverage" (hitting both GLP-1 and GIP receptors). Some users run higher doses (15mg+) for maximum fat loss. Stacking requires close monitoring.',
+          dosePattern: {
+            combo: 'tirzepatide + semaglutide stack',
+            aggressive: '15mg tirzepatide weekly',
+          },
+          confidence: 0.5,
+          sourceTags: ['reddit_longform', 'n_of_1', 'weight_loss_clinic'],
+        },
+      },
+      contraindications: {
+        createMany: {
+          data: [
+            {
+              condition: 'Family history of medullary thyroid cancer (MEN2)',
+              severity: 'HIGH',
+              sourceLane: 'CLINICAL',
+            },
+            {
+              condition: 'Personal history of pancreatitis',
+              severity: 'MEDIUM',
+              sourceLane: 'CLINICAL',
+            },
+          ],
+        },
+      },
+    },
+  });
+  log('  Tirzepatide created');
+
+  // ── DSIP (Delta Sleep-Inducing Peptide) ──────────────────────────────────
+  const dsip = await prisma.peptide.create({
+    data: {
+      slug: 'dsip',
+      name: 'DSIP (Delta Sleep-Inducing Peptide)',
+      category: 'NEURO',
+      route: 'SUBQ',
+      status: 'RESEARCH_ONLY',
+      description:
+        'Natural sleep-promoting peptide discovered in cerebrospinal fluid. Enhances slow-wave (delta) sleep without affecting REM. Synergizes well with other nootropics. Popular in biohacking and longevity circles.',
+      halfLife: '~7 minutes (but effect persists)',
+      storageNotes: 'Refrigerate 2-8°C. Use within 30 days reconstituted.',
+      reconstitutionNotes:
+        'Reconstitute 10mg vial with 2ml BAC water = 5mg/ml. Inject SubQ or IV.',
+      clinicalLanes: {
+        create: {
+          indication: 'Sleep disorders, delta sleep enhancement',
+          doseMin: 100,
+          doseMax: 250,
+          unit: 'mcg',
+          frequency: '30min before bedtime',
+          cycleWeeks: 6,
+          cyclePattern: '4-8 weeks',
+          evidenceLevel: 'PRECLINICAL',
+          sources: ['doi:10.1007/BF00847889'],
+        },
+      },
+      expertLanes: {
+        create: {
+          description:
+            'Standard protocol: 100mcg SubQ 30 minutes before sleep. Cycle 5 days on, 2 days off to prevent tolerance. Best taken on empty stomach. Expect sleep onset within 30-60min.',
+          commonStacks: [],
+          dosePattern: {
+            standard: '100mcg SubQ 30min before bed',
+            enhanced: '150mcg SubQ for deeper sleep',
+            cycling: '5 on / 2 off',
+          },
+          sourceTags: ['sleep_coach', 'longevity_researcher'],
+        },
+      },
+      experimentalLanes: {
+        create: {
+          description:
+            'Nasal route being explored (less reliable absorption). Stacking with Selank for synergistic anxiety + sleep benefit. Higher doses (200-250mcg) for severe insomnia protocols.',
+          dosePattern: {
+            nasal: '200mcg nasal before bed',
+            high_dose: '200-250mcg SubQ for insomnia',
+          },
+          confidence: 0.4,
+          sourceTags: ['reddit_longform', 'n_of_1', 'sleep_optimization'],
+        },
+      },
+    },
+  });
+  log('  DSIP created');
+
+  // ── AOD-9604 ────────────────────────────────────────────────────────────────
+  const aod9604 = await prisma.peptide.create({
+    data: {
+      slug: 'aod-9604',
+      name: 'AOD-9604',
+      category: 'METABOLIC',
+      route: 'SUBQ',
+      status: 'RESEARCH_ONLY',
+      description:
+        'Modified human growth hormone fragment (C-terminal of GH) with potent lipolytic (fat-burning) properties. Activates fat metabolism without GH systemic side effects. Popular in weight loss and body recomposition protocols.',
+      halfLife: '~30-60 minutes',
+      storageNotes: 'Refrigerate 2-8°C. Use within 30 days reconstituted.',
+      reconstitutionNotes:
+        'Reconstitute 5mg vial with 1ml BAC water = 5mg/ml. Typical dose is 0.3ml (1500mcg).',
+      clinicalLanes: {
+        create: {
+          indication: 'Fat metabolism, weight management',
+          doseMin: 300,
+          doseMax: 600,
+          unit: 'mcg',
+          frequency: 'daily AM fasted',
+          cycleWeeks: 8,
+          cyclePattern: '8-12 weeks',
+          evidenceLevel: 'PRECLINICAL',
+          sources: ['doi:10.1016/j.mce.2004.06.006'],
+        },
+      },
+      expertLanes: {
+        create: {
+          description:
+            'Inject 300mcg SubQ in AM fasted state. Best stacked with CJC-1295/Ipamorelin for synergistic fat loss + muscle preservation. Some coaches add to existing GH protocols.',
+          commonStacks: ['CJC-1295/Ipamorelin'],
+          dosePattern: {
+            standard: '300mcg SubQ AM fasted',
+            enhanced: '300mcg AM + 300mcg PM',
+          },
+          sourceTags: ['body_comp_coach', 'functional_md'],
+        },
+      },
+      experimentalLanes: {
+        create: {
+          description:
+            'Higher doses 600mcg 2x/day for aggressive fat loss protocols. Oral bioavailability being researched (currently poor, best SubQ/IM). Some combine with semaglutide for multi-pathway fat loss.',
+          dosePattern: {
+            aggressive: '600mcg SubQ 2x/day',
+            oral: '600mcg oral (low absorption)',
+          },
+          confidence: 0.4,
+          sourceTags: ['reddit_longform', 'n_of_1', 'biohacker_forum'],
+        },
+      },
+    },
+  });
+  log('  AOD-9604 created');
+
+  return { bpc157, tb500, cjcIpa, semaglutide, ghkCu, pt141, selank, tirzepatide, dsip, aod9604 };
 }
 
 // ---------------------------------------------------------------------------
@@ -381,11 +695,17 @@ async function seedInteractions(peptides: {
   tb500: { id: string };
   cjcIpa: { id: string };
   semaglutide: { id: string };
+  pt141: { id: string };
+  selank: { id: string };
+  tirzepatide: { id: string };
+  dsip: { id: string };
+  aod9604: { id: string };
 }) {
   log('Seeding peptide interactions...');
 
   await prisma.peptideInteraction.createMany({
     data: [
+      // Original interactions
       {
         peptideAId: peptides.bpc157.id,
         peptideBId: peptides.tb500.id,
@@ -407,10 +727,39 @@ async function seedInteractions(peptides: {
         notes:
           'BPC-157 may help mitigate GI side effects of semaglutide while both support gut health.',
       },
+      // New interactions
+      {
+        peptideAId: peptides.pt141.id,
+        peptideBId: peptides.semaglutide.id,
+        type: 'CAUTION',
+        notes:
+          'Both affect appetite and nausea pathways. PT-141 stimulates appetite centers while semaglutide suppresses. Monitor GI tolerance closely.',
+      },
+      {
+        peptideAId: peptides.tirzepatide.id,
+        peptideBId: peptides.semaglutide.id,
+        type: 'AVOID',
+        notes:
+          'Both are GLP-1 receptor agonists (tirzepatide also GIP). Do not stack—same receptor class leads to excessive suppression and severe GI side effects.',
+      },
+      {
+        peptideAId: peptides.selank.id,
+        peptideBId: peptides.dsip.id,
+        type: 'SYNERGY',
+        notes:
+          'Complementary nootropic benefits. Selank for daytime anxiety relief, DSIP for sleep. Can be stacked for complete neuro-optimization.',
+      },
+      {
+        peptideAId: peptides.aod9604.id,
+        peptideBId: peptides.cjcIpa.id,
+        type: 'SYNERGY',
+        notes:
+          'Synergistic fat loss + muscle preservation. AOD-9604 for lipolysis, CJC/Ipamorelin for GH pulse and recovery. Complementary mechanisms.',
+      },
     ],
   });
 
-  log('  3 interactions created');
+  log('  9 interactions created');
 }
 
 // ---------------------------------------------------------------------------
@@ -423,6 +772,11 @@ async function seedProtocols(peptides: {
   cjcIpa: { id: string };
   semaglutide: { id: string };
   ghkCu: { id: string };
+  pt141: { id: string };
+  selank: { id: string };
+  tirzepatide: { id: string };
+  dsip: { id: string };
+  aod9604: { id: string };
 }) {
   log('Seeding protocol templates...');
 
@@ -805,7 +1159,7 @@ async function main() {
 
   const peptides = await seedPeptides();
   await seedInteractions(peptides);
-  const templates = await seedProtocols(peptides);
+  const templates = await seedProtocols(peptides as any);
   const demoUser = await seedDemoUser();
   await seedUserProtocol(demoUser, templates.recompProtocol, {
     semaglutide: peptides.semaglutide,
