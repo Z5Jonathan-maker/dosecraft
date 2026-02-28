@@ -10,6 +10,8 @@ export interface Peptide {
   readonly route: AdministrationRoute;
   readonly status: PeptideStatus;
   readonly description: string;
+  readonly halfLife: string;
+  readonly typicalDoseRange: string;
   readonly lanes: readonly EvidenceLane[];
   readonly contraindications: readonly string[];
   readonly interactions: readonly string[];
@@ -25,9 +27,18 @@ export type PeptideCategory =
   | "sleep"
   | "immune";
 
-export type AdministrationRoute = "subcutaneous" | "oral" | "topical" | "intranasal" | "intramuscular";
+export type AdministrationRoute =
+  | "subcutaneous"
+  | "oral"
+  | "topical"
+  | "intranasal"
+  | "intramuscular";
 
-export type PeptideStatus = "well-researched" | "emerging" | "experimental" | "novel";
+export type PeptideStatus =
+  | "well-researched"
+  | "emerging"
+  | "experimental"
+  | "novel";
 
 export interface LaneData {
   readonly summary: string;
@@ -49,6 +60,13 @@ export interface Protocol {
   readonly peptides: readonly ProtocolPeptide[];
   readonly duration: string;
   readonly description: string;
+  readonly creatorName?: string;
+  readonly creatorAvatar?: string;
+  readonly rating?: number;
+  readonly ratingCount?: number;
+  readonly activeUsers?: number;
+  readonly progress?: number; // 0-100 for active protocols
+  readonly startDate?: string;
 }
 
 export type ProtocolIntensity = "conservative" | "standard" | "aggressive";
@@ -72,6 +90,7 @@ export interface DailyDose {
   readonly scheduledTime: string;
   readonly taken: boolean;
   readonly takenAt: string | null;
+  readonly protocolName?: string;
 }
 
 export interface OutcomeMetrics {
@@ -82,6 +101,7 @@ export interface OutcomeMetrics {
   readonly sleep: number | null; // 1-10
   readonly energy: number | null; // 1-10
   readonly soreness: number | null; // 1-10
+  readonly recovery: number | null; // 1-10
   readonly notes: string;
 }
 
@@ -102,6 +122,14 @@ export interface TimeSeriesPoint {
   readonly mood: number | null;
   readonly sleep: number | null;
   readonly energy: number | null;
+  readonly recovery: number | null;
+}
+
+export interface CompliancePoint {
+  readonly day: string;
+  readonly compliance: number;
+  readonly taken: number;
+  readonly total: number;
 }
 
 export interface ProtocolTimeline {
@@ -110,6 +138,30 @@ export interface ProtocolTimeline {
   readonly startDate: string;
   readonly endDate: string;
   readonly color: string;
+}
+
+// ── Creator ──
+export interface Creator {
+  readonly id: string;
+  readonly name: string;
+  readonly bio: string;
+  readonly specialty: string;
+  readonly credentials: string;
+  readonly followers: number;
+  readonly protocolCount: number;
+  readonly verified: boolean;
+  readonly avatarInitials: string;
+  readonly accentColor: string;
+}
+
+// ── Dashboard Stats ──
+export interface DashboardStats {
+  readonly activeProtocols: number;
+  readonly dosesThisWeek: number;
+  readonly complianceRate: number;
+  readonly activePeptides: number;
+  readonly streakDays: number;
+  readonly totalLogged: number;
 }
 
 // ── Calculator ──
@@ -124,4 +176,12 @@ export interface NavItem {
   readonly label: string;
   readonly href: string;
   readonly icon: string;
+}
+
+// ── Injection Site ──
+export interface InjectionSite {
+  readonly id: string;
+  readonly label: string;
+  readonly x: number;
+  readonly y: number;
 }

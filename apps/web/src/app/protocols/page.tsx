@@ -1,167 +1,209 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Plus, Star, Users, Layers, TrendingUp, CheckCircle2, Clock } from "lucide-react";
+import { Card, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ProtocolCard } from "@/components/protocol/protocol-card";
-import { Plus, Filter } from "lucide-react";
-import { MOCK_PROTOCOLS } from "@/lib/mock-data";
+import { LaneBadge } from "@/components/peptide/lane-badge";
+import { MOCK_PROTOCOLS, MOCK_CREATORS } from "@/lib/mock-data";
 import type { ProtocolIntensity, EvidenceLane } from "@/types";
 
-const GOALS = [
-  "injury-recovery",
-  "joint-health",
-  "gut-healing",
-  "body-recomp",
-  "fat-loss",
-  "muscle-gain",
-  "sleep",
-  "recovery",
-  "anti-aging",
-  "skin",
-  "hair",
-  "cognitive",
-] as const;
+const INTENSITY_FILTER: ProtocolIntensity[] = ["conservative", "standard", "aggressive"];
+const LANE_FILTER: EvidenceLane[] = ["clinical", "expert", "experimental"];
 
-const INTENSITIES: ProtocolIntensity[] = ["conservative", "standard", "aggressive"];
-const ANGLES: EvidenceLane[] = ["clinical", "expert", "experimental"];
+const INTENSITY_COLORS: Record<ProtocolIntensity, string> = {
+  conservative: "#00ff88",
+  standard: "#ffaa00",
+  aggressive: "#ff4444",
+};
 
 export default function ProtocolsPage() {
-  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
-  const [selectedIntensity, setSelectedIntensity] = useState<ProtocolIntensity | null>(null);
-  const [selectedAngle, setSelectedAngle] = useState<EvidenceLane | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
+  const [intensityFilter, setIntensityFilter] = useState<ProtocolIntensity | null>(null);
+  const [laneFilter, setLaneFilter] = useState<EvidenceLane | null>(null);
 
-  const filtered = useMemo(() => {
-    return MOCK_PROTOCOLS.filter((p) => {
-      const matchesGoal = !selectedGoal || p.goals.includes(selectedGoal);
-      const matchesIntensity = !selectedIntensity || p.intensity === selectedIntensity;
-      const matchesAngle = !selectedAngle || p.contentAngle === selectedAngle;
-      return matchesGoal && matchesIntensity && matchesAngle;
-    });
-  }, [selectedGoal, selectedIntensity, selectedAngle]);
+  const activeProtocols = MOCK_PROTOCOLS.filter((p) => p.progress !== undefined);
+  const templateProtocols = MOCK_PROTOCOLS.filter((p) => p.progress === undefined);
+
+  const filteredTemplates = templateProtocols.filter((p) => {
+    const matchIntensity = intensityFilter === null || p.intensity === intensityFilter;
+    const matchLane = laneFilter === null || p.contentAngle === laneFilter;
+    return matchIntensity && matchLane;
+  });
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-dc-text">Protocol Templates</h1>
-          <p className="text-sm text-dc-text-muted mt-1">
-            Pre-built peptide stacks for common goals. Or build your own.
-          </p>
+          <p className="text-xs text-dc-text-muted uppercase tracking-wide mb-1">Biohacking Stacks</p>
+          <p className="text-sm text-dc-text-muted">{MOCK_PROTOCOLS.length} protocols &middot; {activeProtocols.length} active</p>
         </div>
         <Link href="/protocols/builder">
-          <Button>
+          <button
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm text-white transition-all"
+            style={{ background: "linear-gradient(135deg, #ff6b35, #ff8555)", boxShadow: "0 4px 16px rgba(255,107,53,0.25)" }}
+          >
             <Plus className="w-4 h-4" />
-            Build Custom
-          </Button>
+            New Protocol
+          </button>
         </Link>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-3">
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition-all ${
-            showFilters
-              ? "bg-dc-accent/10 border-dc-accent/30 text-dc-accent"
-              : "bg-dc-surface border-dc-border text-dc-text-muted hover:text-dc-text"
-          }`}
-        >
-          <Filter className="w-4 h-4" />
-          Filters
-        </button>
-      </div>
-
-      {showFilters && (
-        <div className="glass rounded-xl p-4 space-y-4">
-          {/* Goal */}
-          <div>
-            <p className="text-xs font-medium text-dc-text-muted mb-2 uppercase tracking-wide">
-              Goal
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {GOALS.map((goal) => (
-                <button
-                  key={goal}
-                  onClick={() => setSelectedGoal(selectedGoal === goal ? null : goal)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                    selectedGoal === goal
-                      ? "bg-dc-accent/10 border-dc-accent/30 text-dc-accent"
-                      : "bg-dc-surface border-dc-border text-dc-text-muted hover:text-dc-text"
-                  }`}
-                >
-                  {goal.replace(/-/g, " ")}
-                </button>
-              ))}
-            </div>
+      {/* Active Protocols */}
+      {activeProtocols.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-2 h-2 rounded-full bg-dc-neon-green animate-pulse-glow" />
+            <h2 className="text-base font-semibold text-dc-text">Active Protocols</h2>
+            <span className="text-xs text-dc-text-muted">({activeProtocols.length})</span>
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {activeProtocols.map((protocol) => (
+              <Card key={protocol.id} className="card-expert">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-base font-bold text-dc-text">{protocol.hookTitle}</h3>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-dc-neon-green/10 text-dc-neon-green border border-dc-neon-green/20">
+                        Active
+                      </span>
+                    </div>
+                    <p className="text-xs text-dc-text-muted">{protocol.subtitle}</p>
+                  </div>
+                  <LaneBadge lane={protocol.contentAngle} showLabel size="xs" />
+                </div>
 
-          {/* Intensity */}
-          <div>
-            <p className="text-xs font-medium text-dc-text-muted mb-2 uppercase tracking-wide">
-              Intensity
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {INTENSITIES.map((intensity) => (
+                {/* Progress */}
+                {protocol.progress !== undefined && (
+                  <div className="mb-4">
+                    <div className="flex justify-between text-xs text-dc-text-muted mb-1.5">
+                      <span>Week progress</span>
+                      <span className="font-semibold text-dc-text mono">{protocol.progress}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-dc-surface overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${protocol.progress}%`,
+                          background: protocol.contentAngle === "expert"
+                            ? "linear-gradient(90deg, #ff6b35, #ffaa00)"
+                            : "linear-gradient(90deg, #00d4ff, #00ff88)",
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Peptides */}
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {protocol.peptides.map((p) => (
+                    <Badge key={p.slug} variant="default" size="xs">{p.name}</Badge>
+                  ))}
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between text-xs text-dc-text-muted">
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    Started {protocol.startDate}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Layers className="w-3 h-3" />
+                    {protocol.duration}
+                  </span>
+                  <Badge
+                    variant={protocol.intensity === "conservative" ? "conservative" : protocol.intensity === "standard" ? "standard" : "aggressive"}
+                    size="xs"
+                  >
+                    {protocol.intensity}
+                  </Badge>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Community Templates */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-dc-accent" />
+            <h2 className="text-base font-semibold text-dc-text">Protocol Templates</h2>
+          </div>
+          {/* Filters */}
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1">
+              {LANE_FILTER.map((lane) => (
                 <button
-                  key={intensity}
-                  onClick={() =>
-                    setSelectedIntensity(selectedIntensity === intensity ? null : intensity)
+                  key={lane}
+                  onClick={() => setLaneFilter(laneFilter === lane ? null : lane)}
+                  className="px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-all capitalize"
+                  style={
+                    laneFilter === lane
+                      ? { background: `${lane === "clinical" ? "#00d4ff" : lane === "expert" ? "#ff6b35" : "#b366ff"}15`, borderColor: `${lane === "clinical" ? "#00d4ff" : lane === "expert" ? "#ff6b35" : "#b366ff"}40`, color: lane === "clinical" ? "#00d4ff" : lane === "expert" ? "#ff6b35" : "#b366ff" }
+                      : { borderColor: "#2a2a3e", color: "#8888a0" }
                   }
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                    selectedIntensity === intensity
-                      ? "bg-dc-accent/10 border-dc-accent/30 text-dc-accent"
-                      : "bg-dc-surface border-dc-border text-dc-text-muted hover:text-dc-text"
-                  }`}
                 >
-                  {intensity}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Content Angle */}
-          <div>
-            <p className="text-xs font-medium text-dc-text-muted mb-2 uppercase tracking-wide">
-              Content Angle
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {ANGLES.map((angle) => (
-                <button
-                  key={angle}
-                  onClick={() => setSelectedAngle(selectedAngle === angle ? null : angle)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                    selectedAngle === angle
-                      ? "bg-dc-accent/10 border-dc-accent/30 text-dc-accent"
-                      : "bg-dc-surface border-dc-border text-dc-text-muted hover:text-dc-text"
-                  }`}
-                >
-                  {angle}
+                  {lane}
                 </button>
               ))}
             </div>
           </div>
         </div>
-      )}
 
-      {/* Results */}
-      <p className="text-sm text-dc-text-muted">
-        {filtered.length} protocol{filtered.length !== 1 ? "s" : ""}
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map((protocol) => (
-          <ProtocolCard key={protocol.id} protocol={protocol} />
-        ))}
-      </div>
-
-      {filtered.length === 0 && (
-        <div className="text-center py-16">
-          <p className="text-dc-text-muted">No protocols match your filters.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredTemplates.map((protocol) => (
+            <ProtocolCard key={protocol.id} protocol={protocol} />
+          ))}
         </div>
-      )}
+      </section>
+
+      {/* Creators */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Star className="w-4 h-4 text-dc-warning" />
+          <h2 className="text-base font-semibold text-dc-text">Top Creators</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {MOCK_CREATORS.map((creator) => (
+            <Card key={creator.id} hoverable className="group">
+              <div className="flex items-start gap-4 mb-3">
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0"
+                  style={{ background: `${creator.accentColor}20`, color: creator.accentColor }}
+                >
+                  {creator.avatarInitials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-dc-text truncate">{creator.name}</h3>
+                    {creator.verified && (
+                      <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: creator.accentColor }} />
+                    )}
+                  </div>
+                  <p className="text-[10px] text-dc-text-muted">{creator.credentials}</p>
+                  <p className="text-[10px] text-dc-text-muted">{creator.specialty}</p>
+                </div>
+              </div>
+              <p className="text-xs text-dc-text-muted leading-relaxed mb-3 line-clamp-2">{creator.bio}</p>
+              <div className="flex items-center gap-4 text-[10px] text-dc-text-muted">
+                <span className="flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  {creator.followers.toLocaleString()}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Layers className="w-3 h-3" />
+                  {creator.protocolCount} protocols
+                </span>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

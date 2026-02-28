@@ -23,9 +23,12 @@ export const metadata: Metadata = {
     "peptides",
     "biohacking",
     "BPC-157",
+    "TB-500",
+    "CJC-1295",
     "protocols",
     "dose tracking",
     "body optimization",
+    "longevity",
   ],
 };
 
@@ -36,9 +39,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body
-        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased bg-dc-bg text-dc-text min-h-screen`}
-      >
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased min-h-screen bg-dc-bg text-dc-text`}>
         <AppShell>{children}</AppShell>
       </body>
     </html>

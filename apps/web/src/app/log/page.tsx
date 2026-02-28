@@ -1,263 +1,316 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardTitle, CardContent } from "@/components/ui/card";
+import { Calendar, ClipboardCheck, Plus, MapPin, Syringe, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { DoseChecklist } from "@/components/tracking/dose-checklist";
-import {
-  CalendarDays,
-  TrendingDown,
-  Activity,
-  Moon,
-  Zap,
-  Dumbbell,
-  Save,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import { MOCK_DAILY_DOSES, MOCK_OUTCOMES } from "@/lib/mock-data";
+import { MOCK_DAILY_DOSES, MOCK_OUTCOMES, INJECTION_SITES } from "@/lib/mock-data";
+import clsx from "clsx";
 
-const METRIC_SLIDERS = [
-  { key: "mood", label: "Mood", icon: Activity, color: "#00ff88", max: 10 },
-  { key: "sleep", label: "Sleep Quality", icon: Moon, color: "#b366ff", max: 10 },
-  { key: "energy", label: "Energy", icon: Zap, color: "#ffaa00", max: 10 },
-  { key: "soreness", label: "Soreness", icon: Dumbbell, color: "#ff4444", max: 10 },
+const DAYS_OF_WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+
+const WEEK_DATA = [
+  { day: "Mon", compliance: 100, taken: 5, total: 5 },
+  { day: "Tue", compliance: 80,  taken: 4, total: 5 },
+  { day: "Wed", compliance: 100, taken: 5, total: 5 },
+  { day: "Thu", compliance: 60,  taken: 3, total: 5 },
+  { day: "Fri", compliance: 100, taken: 5, total: 5 },
+  { day: "Sat", compliance: 100, taken: 5, total: 5 },
+  { day: "Sun", compliance: 0,   taken: 0, total: 5 },
 ] as const;
 
-interface OutcomeEntry {
-  weight: string;
-  bodyFat: string;
-  mood: number;
-  sleep: number;
-  energy: number;
-  soreness: number;
-  notes: string;
-}
+const PEPTIDE_OPTIONS = [
+  "BPC-157",
+  "TB-500",
+  "CJC-1295 / Ipamorelin",
+  "Semaglutide",
+  "GHK-Cu",
+  "Epithalon",
+  "PT-141",
+  "Selank",
+];
 
-function loadOutcome(dateStr: string): OutcomeEntry {
-  const existing = MOCK_OUTCOMES.find((o) => o.date === dateStr);
-  return {
-    weight: existing?.weight?.toString() ?? "",
-    bodyFat: existing?.bodyFat?.toString() ?? "",
-    mood: existing?.mood ?? 5,
-    sleep: existing?.sleep ?? 5,
-    energy: existing?.energy ?? 5,
-    soreness: existing?.soreness ?? 5,
-    notes: existing?.notes ?? "",
-  };
-}
+const UNIT_OPTIONS = ["mcg", "mg", "IU", "mL"] as const;
 
 export default function LogPage() {
   const today = new Date();
-  const [selectedDate, setSelectedDate] = useState(today);
-  const [saved, setSaved] = useState(false);
+  const todayStr = today.toLocaleDateString("en-US", { weekday: "short" });
+  const [selectedSite, setSelectedSite] = useState<string | null>(null);
+  const [quickLog, setQuickLog] = useState({
+    peptide: "",
+    dose: "",
+    unit: "mcg" as typeof UNIT_OPTIONS[number],
+    site: "",
+    notes: "",
+  });
+  const [logSuccess, setLogSuccess] = useState(false);
 
-  const dateStr = selectedDate.toISOString().slice(0, 10);
-  const isToday = dateStr === today.toISOString().slice(0, 10);
-
-  const [outcome, setOutcome] = useState<OutcomeEntry>(
-    loadOutcome(dateStr),
-  );
-
-  const shiftDate = (days: number) => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() + days);
-    setSelectedDate(newDate);
-    setSaved(false);
-    const newDateStr = newDate.toISOString().slice(0, 10);
-    setOutcome(loadOutcome(newDateStr));
+  const handleQuickLog = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLogSuccess(true);
+    setQuickLog({ peptide: "", dose: "", unit: "mcg", site: "", notes: "" });
+    setSelectedSite(null);
+    setTimeout(() => setLogSuccess(false), 3000);
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
-  const updateOutcome = (key: keyof OutcomeEntry, value: string | number) => {
-    setOutcome((prev) => ({ ...prev, [key]: value }));
-    setSaved(false);
-  };
+  const today7Day = MOCK_OUTCOMES.slice(-7);
+  const avgCompliance = Math.round(WEEK_DATA.reduce((a, d) => a + d.compliance, 0) / WEEK_DATA.length);
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header with Date Nav */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-dc-text">Daily Log</h1>
-          <p className="text-sm text-dc-text-muted mt-1">
-            Track doses and outcomes for better insights.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => shiftDate(-1)}
-            className="w-8 h-8 rounded-lg bg-dc-surface border border-dc-border flex items-center justify-center text-dc-text-muted hover:text-dc-text transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dc-surface border border-dc-border">
-            <CalendarDays className="w-4 h-4 text-dc-accent" />
-            <span className="text-sm font-medium text-dc-text">
-              {selectedDate.toLocaleDateString("en-US", {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-              })}
-            </span>
-            {isToday && (
-              <Badge variant="success" size="sm">
-                Today
-              </Badge>
-            )}
-          </div>
-          <button
-            onClick={() => shiftDate(1)}
-            disabled={isToday}
-            className="w-8 h-8 rounded-lg bg-dc-surface border border-dc-border flex items-center justify-center text-dc-text-muted hover:text-dc-text transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+    <div className="max-w-6xl mx-auto space-y-6 animate-fade-in">
+      {/* Header Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Today Logged", value: `${MOCK_DAILY_DOSES.filter((d) => d.taken).length}/${MOCK_DAILY_DOSES.length}`, color: "#ff6b35" },
+          { label: "Week Compliance", value: `${avgCompliance}%`, color: "#00d4ff" },
+          { label: "Streak", value: "13 days", color: "#00ff88" },
+          { label: "Total Logged", value: "187", color: "#b366ff" },
+        ].map((stat) => (
+          <Card key={stat.label}>
+            <p className="text-xl font-bold text-dc-text stat-number" style={{ color: stat.color }}>{stat.value}</p>
+            <p className="text-xs text-dc-text-muted mt-1">{stat.label}</p>
+          </Card>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Dose Checklist */}
-        <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Left: Checklist + Calendar */}
+        <div className="lg:col-span-2 space-y-5">
+          {/* Today's Checklist */}
           <Card>
-            <CardTitle>Dose Checklist</CardTitle>
-            <p className="text-xs text-dc-text-muted mt-1 mb-4">
-              Tap each dose to mark as taken.
-            </p>
-            <CardContent>
-              <DoseChecklist doses={MOCK_DAILY_DOSES} />
-            </CardContent>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <ClipboardCheck className="w-4.5 h-4.5 text-dc-accent" />
+                <CardTitle>Today&apos;s Schedule</CardTitle>
+              </div>
+              <p className="text-xs text-dc-text-muted">
+                {today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+              </p>
+            </div>
+            <DoseChecklist doses={MOCK_DAILY_DOSES} />
+          </Card>
+
+          {/* Weekly Calendar */}
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4.5 h-4.5 text-dc-neon-cyan" />
+                <CardTitle>Weekly Calendar</CardTitle>
+              </div>
+              <div className="flex items-center gap-1">
+                <button className="p-1.5 rounded-lg hover:bg-dc-surface-alt text-dc-text-muted hover:text-dc-text transition-colors">
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-xs text-dc-text-muted px-2">Feb 24 – Mar 2</span>
+                <button className="p-1.5 rounded-lg hover:bg-dc-surface-alt text-dc-text-muted hover:text-dc-text transition-colors">
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {WEEK_DATA.map((day) => {
+                const isToday = day.day === todayStr;
+                const pct = day.compliance;
+                const barColor = pct === 100 ? "#00ff88" : pct >= 80 ? "#ffaa00" : pct > 0 ? "#ff6b35" : "#2a2a3e";
+
+                return (
+                  <div key={day.day} className="flex flex-col items-center gap-2">
+                    <p className={clsx("text-[10px] font-medium", isToday ? "text-dc-accent" : "text-dc-text-muted")}>
+                      {day.day}
+                    </p>
+                    <div className="relative w-full h-20 bg-dc-surface rounded-lg overflow-hidden">
+                      <div
+                        className="absolute bottom-0 left-0 right-0 rounded-lg transition-all duration-500"
+                        style={{ height: `${pct}%`, backgroundColor: barColor, opacity: 0.8 }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className={clsx("text-[10px] font-bold", pct > 0 ? "text-white" : "text-dc-text-faint")}>
+                          {pct > 0 ? `${day.taken}/${day.total}` : "—"}
+                        </span>
+                      </div>
+                    </div>
+                    {isToday && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-dc-accent animate-pulse-glow" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-dc-border">
+              {[
+                { color: "#00ff88", label: "Full" },
+                { color: "#ffaa00", label: "Partial" },
+                { color: "#ff6b35", label: "Missed" },
+              ].map((l) => (
+                <div key={l.label} className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded" style={{ background: l.color }} />
+                  <span className="text-[10px] text-dc-text-muted">{l.label}</span>
+                </div>
+              ))}
+            </div>
           </Card>
         </div>
 
-        {/* Right: Outcome Metrics */}
-        <div className="space-y-4">
-          {/* Body Metrics */}
+        {/* Right: Quick Log + Body Map */}
+        <div className="space-y-5">
+          {/* Quick Log */}
           <Card>
-            <CardTitle>Body Metrics</CardTitle>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3 mt-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <TrendingDown className="w-3.5 h-3.5 text-dc-accent" />
-                    <span className="text-xs font-medium text-dc-text-muted">
-                      Weight (lbs)
-                    </span>
-                  </div>
-                  <Input
+            <div className="flex items-center gap-2 mb-4">
+              <Plus className="w-4.5 h-4.5 text-dc-neon-green" />
+              <CardTitle>Quick Log</CardTitle>
+            </div>
+
+            {logSuccess && (
+              <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-dc-neon-green/10 border border-dc-neon-green/20 mb-4 text-dc-neon-green text-sm">
+                <ClipboardCheck className="w-4 h-4" />
+                Dose logged successfully!
+              </div>
+            )}
+
+            <form onSubmit={handleQuickLog} className="space-y-3">
+              {/* Peptide */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-dc-text-muted uppercase tracking-wide">Compound</label>
+                <select
+                  value={quickLog.peptide}
+                  onChange={(e) => setQuickLog({ ...quickLog, peptide: e.target.value })}
+                  required
+                  className="w-full px-3 py-2.5 rounded-xl text-sm text-dc-text bg-dc-surface border border-dc-border focus:outline-none focus:border-dc-accent focus:ring-2 focus:ring-dc-accent/15 transition-all"
+                >
+                  <option value="">Select compound...</option>
+                  {PEPTIDE_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+
+              {/* Dose + Unit */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-dc-text-muted uppercase tracking-wide">Dose</label>
+                  <input
                     type="number"
-                    step="0.1"
-                    placeholder="183.0"
-                    value={outcome.weight}
-                    onChange={(e) => updateOutcome("weight", e.target.value)}
+                    value={quickLog.dose}
+                    onChange={(e) => setQuickLog({ ...quickLog, dose: e.target.value })}
+                    required
+                    placeholder="250"
+                    className="w-full px-3 py-2.5 rounded-xl text-sm text-dc-text bg-dc-surface border border-dc-border placeholder:text-dc-text-muted/40 focus:outline-none focus:border-dc-accent focus:ring-2 focus:ring-dc-accent/15 transition-all"
                   />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Activity className="w-3.5 h-3.5 text-dc-clinical" />
-                    <span className="text-xs font-medium text-dc-text-muted">
-                      Body Fat %
-                    </span>
-                  </div>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    placeholder="17.0"
-                    value={outcome.bodyFat}
-                    onChange={(e) => updateOutcome("bodyFat", e.target.value)}
-                  />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-dc-text-muted uppercase tracking-wide">Unit</label>
+                  <select
+                    value={quickLog.unit}
+                    onChange={(e) => setQuickLog({ ...quickLog, unit: e.target.value as typeof UNIT_OPTIONS[number] })}
+                    className="w-full px-3 py-2.5 rounded-xl text-sm text-dc-text bg-dc-surface border border-dc-border focus:outline-none focus:border-dc-accent transition-all"
+                  >
+                    {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+                  </select>
                 </div>
               </div>
-            </CardContent>
+
+              {/* Injection Site */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-dc-text-muted uppercase tracking-wide flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />
+                  Injection Site
+                </label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {INJECTION_SITES.map((site) => (
+                    <button
+                      key={site.id}
+                      type="button"
+                      onClick={() => { setSelectedSite(site.id); setQuickLog({ ...quickLog, site: site.label }); }}
+                      className={clsx(
+                        "px-2.5 py-2 rounded-lg border text-[10px] font-medium text-left transition-all",
+                        selectedSite === site.id
+                          ? "bg-dc-accent/10 border-dc-accent/30 text-dc-accent"
+                          : "border-dc-border text-dc-text-muted hover:border-dc-accent/20 hover:text-dc-text",
+                      )}
+                    >
+                      {site.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-dc-text-muted uppercase tracking-wide">Notes (optional)</label>
+                <textarea
+                  value={quickLog.notes}
+                  onChange={(e) => setQuickLog({ ...quickLog, notes: e.target.value })}
+                  placeholder="Any observations..."
+                  rows={2}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm text-dc-text bg-dc-surface border border-dc-border placeholder:text-dc-text-muted/40 focus:outline-none focus:border-dc-accent focus:ring-2 focus:ring-dc-accent/15 transition-all resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all"
+                style={{ background: "linear-gradient(135deg, #00ff88 0%, #00cc66 100%)", boxShadow: "0 4px 16px rgba(0,255,136,0.2)" }}
+              >
+                <ClipboardCheck className="w-4 h-4" />
+                Log Dose
+              </button>
+            </form>
           </Card>
 
-          {/* Subjective Metrics */}
+          {/* Body Map */}
           <Card>
-            <CardTitle>Subjective Scores</CardTitle>
-            <CardContent>
-              <div className="space-y-5 mt-3">
-                {METRIC_SLIDERS.map((metric) => {
-                  const Icon = metric.icon;
-                  const value = outcome[
-                    metric.key as keyof OutcomeEntry
-                  ] as number;
-                  const pct = (value / metric.max) * 100;
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="w-4.5 h-4.5 text-dc-warning" />
+              <CardTitle>Injection Site Map</CardTitle>
+            </div>
+
+            <div className="relative w-full aspect-[9/16] max-w-[180px] mx-auto">
+              {/* Body silhouette SVG */}
+              <svg viewBox="0 0 100 180" className="w-full h-full">
+                {/* Simple body outline */}
+                <ellipse cx="50" cy="15" rx="10" ry="12" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
+                <rect x="38" y="28" width="24" height="36" rx="4" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
+                <rect x="20" y="30" width="16" height="28" rx="4" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
+                <rect x="64" y="30" width="16" height="28" rx="4" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
+                <rect x="38" y="64" width="10" height="36" rx="4" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
+                <rect x="52" y="64" width="10" height="36" rx="4" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
+                <rect x="36" y="100" width="10" height="28" rx="4" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
+                <rect x="54" y="100" width="10" height="28" rx="4" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
+
+                {/* Injection site markers */}
+                {INJECTION_SITES.map((site) => {
+                  const isSelected = selectedSite === site.id;
+                  const x = site.x;
+                  const y = (site.y / 100) * 140 + 10;
                   return (
-                    <div key={metric.key}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Icon
-                            className="w-4 h-4"
-                            style={{ color: metric.color }}
-                          />
-                          <span className="text-sm font-medium text-dc-text">
-                            {metric.label}
-                          </span>
-                        </div>
-                        <span
-                          className="text-lg font-bold font-mono"
-                          style={{ color: metric.color }}
-                        >
-                          {value}
-                        </span>
-                      </div>
-                      <div className="relative">
-                        <input
-                          type="range"
-                          min="1"
-                          max={metric.max}
-                          value={value}
-                          onChange={(e) =>
-                            updateOutcome(
-                              metric.key as keyof OutcomeEntry,
-                              parseInt(e.target.value, 10),
-                            )
-                          }
-                          className="w-full h-2 rounded-full appearance-none cursor-pointer"
-                          style={{
-                            background: `linear-gradient(to right, ${metric.color} 0%, ${metric.color} ${pct}%, #2a2a3e ${pct}%, #2a2a3e 100%)`,
-                          }}
-                        />
-                        <div className="flex justify-between mt-1">
-                          <span className="text-[10px] text-dc-text-muted">
-                            1
-                          </span>
-                          <span className="text-[10px] text-dc-text-muted">
-                            {metric.max}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    <g key={site.id} className="cursor-pointer" onClick={() => { setSelectedSite(site.id); setQuickLog(q => ({ ...q, site: site.label })); }}>
+                      <circle
+                        cx={x}
+                        cy={y}
+                        r={isSelected ? 5 : 3.5}
+                        fill={isSelected ? "#ff6b35" : "#2a2a3e"}
+                        stroke={isSelected ? "#ff6b35" : "#3a3a5e"}
+                        strokeWidth="1"
+                        style={{ filter: isSelected ? "drop-shadow(0 0 6px rgba(255,107,53,0.8))" : "none" }}
+                      />
+                    </g>
                   );
                 })}
+              </svg>
+            </div>
+
+            {selectedSite && (
+              <div className="mt-3 px-3 py-2 rounded-lg bg-dc-accent/8 border border-dc-accent/20 text-xs text-dc-accent text-center">
+                Selected: {INJECTION_SITES.find((s) => s.id === selectedSite)?.label}
               </div>
-            </CardContent>
-          </Card>
+            )}
 
-          {/* Notes */}
-          <Card>
-            <CardTitle>Notes</CardTitle>
-            <CardContent>
-              <textarea
-                placeholder="Any observations, side effects, or milestones..."
-                value={outcome.notes}
-                onChange={(e) => updateOutcome("notes", e.target.value)}
-                className="w-full mt-3 px-4 py-2.5 rounded-lg text-sm text-dc-text placeholder:text-dc-text-muted/50 bg-dc-surface border border-dc-border focus:outline-none focus:border-dc-accent focus:ring-1 focus:ring-dc-accent/30 transition-all duration-200 resize-none h-24"
-              />
-            </CardContent>
+            <p className="text-[10px] text-dc-text-muted text-center mt-2">
+              Tap a site to select it for logging
+            </p>
           </Card>
-
-          {/* Save */}
-          <Button onClick={handleSave} className="w-full" size="lg">
-            <Save className="w-4 h-4" />
-            {saved ? "Saved!" : "Save Entry"}
-          </Button>
         </div>
       </div>
     </div>

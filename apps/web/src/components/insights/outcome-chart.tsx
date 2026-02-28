@@ -10,24 +10,49 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceLine,
 } from "recharts";
 import type { TimeSeriesPoint } from "@/types";
 
 interface OutcomeChartProps {
   readonly data: readonly TimeSeriesPoint[];
+  readonly compact?: boolean;
 }
 
 const METRICS = [
-  { key: "weight", label: "Weight (lbs)", color: "#ff6b35", yAxisId: "left" },
-  { key: "bodyFat", label: "Body Fat %", color: "#00d4ff", yAxisId: "left" },
-  { key: "mood", label: "Mood", color: "#00ff88", yAxisId: "right" },
-  { key: "sleep", label: "Sleep", color: "#b366ff", yAxisId: "right" },
-  { key: "energy", label: "Energy", color: "#ffaa00", yAxisId: "right" },
+  { key: "sleep",    label: "Sleep",    color: "#b366ff", yAxisId: "scores", defaultOn: true },
+  { key: "energy",   label: "Energy",   color: "#00d4ff", yAxisId: "scores", defaultOn: true },
+  { key: "mood",     label: "Mood",     color: "#00ff88", yAxisId: "scores", defaultOn: true },
+  { key: "recovery", label: "Recovery", color: "#ffaa00", yAxisId: "scores", defaultOn: false },
+  { key: "weight",   label: "Weight",   color: "#ff6b35", yAxisId: "weight", defaultOn: false },
+  { key: "bodyFat",  label: "Body Fat", color: "#ff4444", yAxisId: "weight", defaultOn: false },
 ] as const;
 
-export function OutcomeChart({ data }: OutcomeChartProps) {
+const CustomTooltip = ({ active, payload, label }: {
+  active?: boolean;
+  payload?: Array<{ name: string; value: number; color: string; dataKey: string }>;
+  label?: string;
+}) => {
+  if (!active || !payload || payload.length === 0) return null;
+  return (
+    <div className="glass rounded-xl px-4 py-3 border border-dc-border shadow-2xl min-w-[160px]">
+      <p className="text-xs text-dc-text-muted mb-2 font-medium">{label}</p>
+      {payload.map((entry) => (
+        <div key={entry.dataKey} className="flex items-center justify-between gap-4 py-0.5">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+            <span className="text-xs text-dc-text-muted">{entry.name}</span>
+          </div>
+          <span className="text-xs font-semibold text-dc-text mono">{entry.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export function OutcomeChart({ data, compact = false }: OutcomeChartProps) {
   const [activeMetrics, setActiveMetrics] = useState<Set<string>>(
-    new Set(["weight", "sleep", "mood"]),
+    new Set(METRICS.filter((m) => m.defaultOn).map((m) => m.key)),
   );
 
   const toggleMetric = (key: string) => {
@@ -50,66 +75,67 @@ export function OutcomeChart({ data }: OutcomeChartProps) {
   return (
     <div>
       {/* Metric toggles */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {METRICS.map((metric) => (
-          <button
-            key={metric.key}
-            onClick={() => toggleMetric(metric.key)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200"
-            style={{
-              backgroundColor: activeMetrics.has(metric.key)
-                ? `${metric.color}15`
-                : "transparent",
-              borderColor: activeMetrics.has(metric.key) ? `${metric.color}50` : "#2a2a3e",
-              color: activeMetrics.has(metric.key) ? metric.color : "#8888a0",
-            }}
-          >
-            <span
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: metric.color }}
-            />
-            {metric.label}
-          </button>
-        ))}
-      </div>
+      {!compact && (
+        <div className="flex flex-wrap gap-2 mb-5">
+          {METRICS.map((metric) => {
+            const isActive = activeMetrics.has(metric.key);
+            return (
+              <button
+                key={metric.key}
+                onClick={() => toggleMetric(metric.key)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200"
+                style={{
+                  backgroundColor: isActive ? `${metric.color}12` : "transparent",
+                  borderColor: isActive ? `${metric.color}40` : "rgba(42,42,62,0.8)",
+                  color: isActive ? metric.color : "#8888a0",
+                }}
+              >
+                <span
+                  className="w-2 h-2 rounded-full transition-opacity"
+                  style={{ backgroundColor: metric.color, opacity: isActive ? 1 : 0.3 }}
+                />
+                {metric.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Chart */}
-      <ResponsiveContainer width="100%" height={320}>
-        <LineChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3e" />
+      <ResponsiveContainer width="100%" height={compact ? 180 : 300}>
+        <LineChart
+          data={chartData}
+          margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(42,42,62,0.8)" vertical={false} />
           <XAxis
             dataKey="date"
-            stroke="#8888a0"
-            fontSize={11}
+            stroke="#4a4a6a"
+            fontSize={10}
             tickLine={false}
+            axisLine={false}
+            interval={compact ? 6 : 4}
           />
           <YAxis
-            yAxisId="left"
-            stroke="#8888a0"
-            fontSize={11}
-            tickLine={false}
-            domain={["auto", "auto"]}
-          />
-          <YAxis
-            yAxisId="right"
-            orientation="right"
-            stroke="#8888a0"
-            fontSize={11}
-            tickLine={false}
+            yAxisId="scores"
             domain={[0, 10]}
+            stroke="#4a4a6a"
+            fontSize={10}
+            tickLine={false}
+            axisLine={false}
+            ticks={[0, 5, 10]}
           />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "#12121a",
-              border: "1px solid #2a2a3e",
-              borderRadius: "8px",
-              color: "#e8e8f0",
-              fontSize: "12px",
-            }}
+          <YAxis
+            yAxisId="weight"
+            orientation="right"
+            stroke="#4a4a6a"
+            fontSize={10}
+            tickLine={false}
+            axisLine={false}
+            domain={["auto", "auto"]}
+            hide={!activeMetrics.has("weight") && !activeMetrics.has("bodyFat")}
           />
-          <Legend
-            wrapperStyle={{ fontSize: "11px", color: "#8888a0" }}
-          />
+          <Tooltip content={<CustomTooltip />} />
+          {!compact && <Legend wrapperStyle={{ fontSize: "10px", color: "#8888a0", paddingTop: "12px" }} />}
           {METRICS.filter((m) => activeMetrics.has(m.key)).map((metric) => (
             <Line
               key={metric.key}
@@ -117,10 +143,10 @@ export function OutcomeChart({ data }: OutcomeChartProps) {
               dataKey={metric.key}
               name={metric.label}
               stroke={metric.color}
-              strokeWidth={2}
+              strokeWidth={compact ? 1.5 : 2}
               yAxisId={metric.yAxisId}
               dot={false}
-              activeDot={{ r: 4, strokeWidth: 0 }}
+              activeDot={{ r: 4, strokeWidth: 0, fill: metric.color }}
             />
           ))}
         </LineChart>

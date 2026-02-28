@@ -4,220 +4,219 @@ import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PeptideCard } from "@/components/peptide/peptide-card";
-import { Search, Filter } from "lucide-react";
+import { Search, SlidersHorizontal, X, FlaskConical } from "lucide-react";
 import { MOCK_PEPTIDES } from "@/lib/mock-data";
-import type { PeptideCategory, AdministrationRoute, PeptideStatus } from "@/types";
+import type { EvidenceLane, PeptideCategory, AdministrationRoute, PeptideStatus } from "@/types";
 
-const CATEGORIES: PeptideCategory[] = [
-  "healing",
-  "growth-hormone",
-  "metabolic",
-  "cosmetic",
-  "neuroprotective",
-  "sleep",
-  "immune",
+const CATEGORIES: { value: PeptideCategory; label: string }[] = [
+  { value: "healing", label: "Healing" },
+  { value: "growth-hormone", label: "Growth Hormone" },
+  { value: "metabolic", label: "Metabolic" },
+  { value: "cosmetic", label: "Cosmetic" },
+  { value: "neuroprotective", label: "Neuroprotective" },
+  { value: "sleep", label: "Sleep" },
+  { value: "immune", label: "Immune" },
 ];
 
-const ROUTES: AdministrationRoute[] = [
-  "subcutaneous",
-  "oral",
-  "topical",
-  "intranasal",
-  "intramuscular",
+const LANES: { value: EvidenceLane; label: string; color: string }[] = [
+  { value: "clinical",     label: "Clinical",     color: "#00d4ff" },
+  { value: "expert",       label: "Expert",       color: "#ff6b35" },
+  { value: "experimental", label: "Experimental", color: "#b366ff" },
 ];
 
-const STATUSES: PeptideStatus[] = [
-  "well-researched",
-  "emerging",
-  "experimental",
-  "novel",
+const STATUSES: { value: PeptideStatus; label: string }[] = [
+  { value: "well-researched", label: "Well Researched" },
+  { value: "emerging",        label: "Emerging" },
+  { value: "experimental",    label: "Experimental" },
+  { value: "novel",           label: "Novel" },
 ];
 
 export default function LibraryPage() {
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<PeptideCategory | null>(null);
-  const [selectedRoute, setSelectedRoute] = useState<AdministrationRoute | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<PeptideCategory[]>([]);
+  const [selectedLanes, setSelectedLanes] = useState<EvidenceLane[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<PeptideStatus | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  const filtered = useMemo(() => {
-    return MOCK_PEPTIDES.filter((p) => {
-      const matchesSearch =
-        search === "" ||
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.aliases.some((a) => a.toLowerCase().includes(search.toLowerCase())) ||
-        p.description.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory = !selectedCategory || p.category === selectedCategory;
-      const matchesRoute = !selectedRoute || p.route === selectedRoute;
-      const matchesStatus = !selectedStatus || p.status === selectedStatus;
-      return matchesSearch && matchesCategory && matchesRoute && matchesStatus;
-    });
-  }, [search, selectedCategory, selectedRoute, selectedStatus]);
+  const toggleCategory = (cat: PeptideCategory) => {
+    setSelectedCategories((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat],
+    );
+  };
+
+  const toggleLane = (lane: EvidenceLane) => {
+    setSelectedLanes((prev) =>
+      prev.includes(lane) ? prev.filter((l) => l !== lane) : [...prev, lane],
+    );
+  };
 
   const clearFilters = () => {
-    setSelectedCategory(null);
-    setSelectedRoute(null);
+    setSelectedCategories([]);
+    setSelectedLanes([]);
     setSelectedStatus(null);
     setSearch("");
   };
 
-  const hasActiveFilters = selectedCategory || selectedRoute || selectedStatus || search;
+  const hasFilters = selectedCategories.length > 0 || selectedLanes.length > 0 || selectedStatus !== null || search !== "";
+
+  const filtered = useMemo(() => {
+    return MOCK_PEPTIDES.filter((p) => {
+      const matchSearch =
+        search === "" ||
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.aliases.some((a) => a.toLowerCase().includes(search.toLowerCase())) ||
+        p.description.toLowerCase().includes(search.toLowerCase());
+      const matchCat = selectedCategories.length === 0 || selectedCategories.includes(p.category);
+      const matchLane = selectedLanes.length === 0 || selectedLanes.some((l) => p.lanes.includes(l));
+      const matchStatus = selectedStatus === null || p.status === selectedStatus;
+      return matchSearch && matchCat && matchLane && matchStatus;
+    });
+  }, [search, selectedCategories, selectedLanes, selectedStatus]);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Search & Filter */}
-      <div className="space-y-4">
-        <div className="flex gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dc-text-muted" />
-            <Input
-              placeholder="Search peptides by name, alias, or description..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
+    <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <FlaskConical className="w-5 h-5 text-dc-clinical" />
+            <h2 className="text-sm font-medium text-dc-clinical">Evidence-Based Compounds</h2>
           </div>
+          <p className="text-dc-text-muted text-sm">
+            {MOCK_PEPTIDES.length} compounds &middot; {filtered.length} shown
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {hasFilters && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs text-dc-text-muted hover:text-dc-text bg-dc-surface border border-dc-border transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+              Clear
+            </button>
+          )}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`px-4 py-2.5 rounded-lg border text-sm font-medium flex items-center gap-2 transition-all ${
-              showFilters || hasActiveFilters
-                ? "bg-dc-accent/10 border-dc-accent/30 text-dc-accent"
-                : "bg-dc-surface border-dc-border text-dc-text-muted hover:text-dc-text"
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium border transition-all ${
+              showFilters
+                ? "bg-dc-accent/10 text-dc-accent border-dc-accent/30"
+                : "bg-dc-surface text-dc-text-muted border-dc-border hover:border-dc-accent/20"
             }`}
           >
-            <Filter className="w-4 h-4" />
+            <SlidersHorizontal className="w-4 h-4" />
             Filters
+            {hasFilters && (
+              <span className="w-2 h-2 rounded-full bg-dc-accent" />
+            )}
           </button>
         </div>
-
-        {/* Filter panels */}
-        {showFilters && (
-          <div className="glass rounded-xl p-4 space-y-4">
-            {/* Category */}
-            <div>
-              <p className="text-xs font-medium text-dc-text-muted mb-2 uppercase tracking-wide">
-                Category
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() =>
-                      setSelectedCategory(selectedCategory === cat ? null : cat)
-                    }
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                      selectedCategory === cat
-                        ? "bg-dc-accent/10 border-dc-accent/30 text-dc-accent"
-                        : "bg-dc-surface border-dc-border text-dc-text-muted hover:text-dc-text"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Route */}
-            <div>
-              <p className="text-xs font-medium text-dc-text-muted mb-2 uppercase tracking-wide">
-                Route
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {ROUTES.map((route) => (
-                  <button
-                    key={route}
-                    onClick={() =>
-                      setSelectedRoute(selectedRoute === route ? null : route)
-                    }
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                      selectedRoute === route
-                        ? "bg-dc-clinical/10 border-dc-clinical/30 text-dc-clinical"
-                        : "bg-dc-surface border-dc-border text-dc-text-muted hover:text-dc-text"
-                    }`}
-                  >
-                    {route}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Status */}
-            <div>
-              <p className="text-xs font-medium text-dc-text-muted mb-2 uppercase tracking-wide">
-                Status
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {STATUSES.map((status) => (
-                  <button
-                    key={status}
-                    onClick={() =>
-                      setSelectedStatus(selectedStatus === status ? null : status)
-                    }
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                      selectedStatus === status
-                        ? "bg-dc-neon-purple/10 border-dc-neon-purple/30 text-dc-neon-purple"
-                        : "bg-dc-surface border-dc-border text-dc-text-muted hover:text-dc-text"
-                    }`}
-                  >
-                    {status}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="text-xs text-dc-accent hover:text-dc-accent-hover"
-              >
-                Clear all filters
-              </button>
-            )}
-          </div>
-        )}
       </div>
 
-      {/* Results count */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-dc-text-muted">
-          {filtered.length} peptide{filtered.length !== 1 ? "s" : ""} found
-        </p>
-        {hasActiveFilters && (
-          <div className="flex gap-2">
-            {selectedCategory && (
-              <Badge variant="expert" size="sm">
-                {selectedCategory}
-              </Badge>
-            )}
-            {selectedRoute && (
-              <Badge variant="clinical" size="sm">
-                {selectedRoute}
-              </Badge>
-            )}
-            {selectedStatus && (
-              <Badge variant="experimental" size="sm">
-                {selectedStatus}
-              </Badge>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map((peptide) => (
-          <PeptideCard key={peptide.slug} peptide={peptide} />
-        ))}
-      </div>
-
-      {filtered.length === 0 && (
-        <div className="text-center py-16">
-          <p className="text-dc-text-muted">No peptides match your filters.</p>
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-dc-text-muted pointer-events-none" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search peptides — BPC-157, TB-500, GHK-Cu..."
+          className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm text-dc-text bg-dc-surface border border-dc-border placeholder:text-dc-text-muted/40 focus:outline-none focus:border-dc-accent focus:ring-2 focus:ring-dc-accent/15 transition-all"
+        />
+        {search && (
           <button
-            onClick={clearFilters}
-            className="text-dc-accent hover:text-dc-accent-hover mt-2 text-sm"
+            onClick={() => setSearch("")}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-dc-text-muted hover:text-dc-text"
           >
-            Clear filters
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="glass rounded-2xl p-5 space-y-5 animate-fade-in">
+          {/* Evidence Lane */}
+          <div>
+            <p className="text-xs font-medium text-dc-text-muted uppercase tracking-wide mb-3">Evidence Lane</p>
+            <div className="flex flex-wrap gap-2">
+              {LANES.map((lane) => (
+                <button
+                  key={lane.value}
+                  onClick={() => toggleLane(lane.value)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all"
+                  style={{
+                    backgroundColor: selectedLanes.includes(lane.value) ? `${lane.color}15` : "transparent",
+                    borderColor: selectedLanes.includes(lane.value) ? `${lane.color}40` : "#2a2a3e",
+                    color: selectedLanes.includes(lane.value) ? lane.color : "#8888a0",
+                  }}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ background: lane.color, boxShadow: selectedLanes.includes(lane.value) ? `0 0 6px ${lane.color}` : "none" }}
+                  />
+                  {lane.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Category */}
+          <div>
+            <p className="text-xs font-medium text-dc-text-muted uppercase tracking-wide mb-3">Category</p>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.value}
+                  onClick={() => toggleCategory(cat.value)}
+                  className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all capitalize ${
+                    selectedCategories.includes(cat.value)
+                      ? "bg-dc-accent/10 text-dc-accent border-dc-accent/30"
+                      : "bg-transparent text-dc-text-muted border-dc-border hover:border-dc-accent/20 hover:text-dc-text"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Research Status */}
+          <div>
+            <p className="text-xs font-medium text-dc-text-muted uppercase tracking-wide mb-3">Research Status</p>
+            <div className="flex flex-wrap gap-2">
+              {STATUSES.map((s) => (
+                <button
+                  key={s.value}
+                  onClick={() => setSelectedStatus(selectedStatus === s.value ? null : s.value)}
+                  className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
+                    selectedStatus === s.value
+                      ? "bg-dc-neon-green/10 text-dc-neon-green border-dc-neon-green/30"
+                      : "bg-transparent text-dc-text-muted border-dc-border hover:border-dc-accent/20 hover:text-dc-text"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Results Grid */}
+      {filtered.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filtered.map((peptide) => (
+            <PeptideCard key={peptide.slug} peptide={peptide} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16">
+          <FlaskConical className="w-12 h-12 text-dc-text-muted mx-auto mb-4 opacity-30" />
+          <h3 className="text-base font-medium text-dc-text mb-2">No compounds found</h3>
+          <p className="text-sm text-dc-text-muted">Try adjusting your search or filters.</p>
+          <button onClick={clearFilters} className="mt-4 text-sm text-dc-accent hover:underline">
+            Clear all filters
           </button>
         </div>
       )}
