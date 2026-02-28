@@ -84,4 +84,16 @@ export class BillingController {
       data: await this.billingService.getSubscription(user.sub),
     };
   }
+
+  @Post('portal')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create Stripe customer portal session' })
+  @ApiResponse({ status: 200, description: 'Customer portal URL' })
+  async createPortal(@CurrentUser() user: JwtPayload) {
+    return {
+      success: true,
+      data: await this.billingService.createPortalSession(user.sub),
+    };
+  }
 }
