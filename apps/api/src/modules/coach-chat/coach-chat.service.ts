@@ -7,11 +7,14 @@ interface ChatMessage {
   readonly content: string;
 }
 
-interface ChatResponse {
+export interface ChatResponse {
   readonly reply: string;
   readonly citations: readonly string[];
   readonly conversationId: string;
 }
+
+/** In-memory conversation store (schema has no chat/conversation models yet) */
+const conversationStore = new Map<string, { userId: string; messages: ChatMessage[] }>();
 
 @Injectable()
 export class CoachChatService {
@@ -27,10 +30,12 @@ export class CoachChatService {
     message: string,
     conversationId?: string,
   ): Promise<ChatResponse> {
-    // 1. Load or create conversation
-    const conversation = conversationId
-      ? await this.loadConversation(userId, conversationId)
-      : await this.createConversation(userId);
+    // 1. Load or create conversation (in-memory until schema has chat tables)
+    const convId = conversationId ?? `conv_${userId}_${Date.now()}`;
+    const conversation = conversationStore.get(convId) ?? { userId, messages: [] as ChatMessage[] };
+    if (!conversationStore.has(convId)) {
+      conversationStore.set(convId, conversation);
+    }
 
     // 2. Retrieve RAG context based on user's protocols and the question
     const ragContext = await this.retrieveContext(userId, message);
@@ -50,79 +55,32 @@ export class CoachChatService {
       ...history.map((m) => ({ role: m.role, content: m.content })),
     ]);
 
-    // 5. Persist messages
-    await this.prisma.chatMessage.createMany({
-      data: [
-        {
-          conversationId: conversation.id,
-          role: 'user',
-          content: message,
-        },
-        {
-          conversationId: conversation.id,
-          role: 'assistant',
-          content: aiResponse.message,
-        },
-      ],
-    });
+    // 5. Persist messages in-memory
+    conversation.messages.push(
+      { role: 'user', content: message },
+      { role: 'assistant', content: aiResponse.message },
+    );
 
     this.logger.debug(
-      `Chat processed for user ${userId}, conversation ${conversation.id}`,
+      `Chat processed for user ${userId}, conversation ${convId}`,
     );
 
     return {
       reply: aiResponse.message,
       citations: aiResponse.citations,
-      conversationId: conversation.id,
+      conversationId: convId,
     };
-  }
-
-  private async loadConversation(
-    userId: string,
-    conversationId: string,
-  ): Promise<{ id: string; messages: ChatMessage[] }> {
-    const conversation = await this.prisma.conversation.findFirst({
-      where: { id: conversationId, userId },
-      include: {
-        messages: {
-          orderBy: { createdAt: 'asc' },
-          take: 20, // sliding window: last 20 messages
-        },
-      },
-    });
-
-    if (!conversation) {
-      return this.createConversation(userId);
-    }
-
-    return {
-      id: conversation.id,
-      messages: conversation.messages.map((m) => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-      })),
-    };
-  }
-
-  private async createConversation(
-    userId: string,
-  ): Promise<{ id: string; messages: ChatMessage[] }> {
-    const conversation = await this.prisma.conversation.create({
-      data: { userId },
-    });
-
-    return { id: conversation.id, messages: [] };
   }
 
   private async retrieveContext(
     userId: string,
-    message: string,
+    _message: string,
   ): Promise<string> {
     // Retrieve user's active protocols for context
     const activeProtocols = await this.prisma.userProtocol.findMany({
       where: { userId, status: 'ACTIVE' },
       include: {
-        compounds: {
+        peptides: {
           include: {
             peptide: { select: { name: true, description: true } },
           },
@@ -136,8 +94,8 @@ export class CoachChatService {
     }
 
     const protocolSummaries = activeProtocols.map((p) => {
-      const compounds = p.compounds
-        .map((c) => `${c.peptide.name} (${c.doseMcg}mcg, ${c.frequency})`)
+      const compounds = p.peptides
+        .map((c) => `${c.peptide.name} (${c.dose}${c.unit}, ${c.frequency})`)
         .join(', ');
       return `Protocol "${p.name}": ${compounds}`;
     });

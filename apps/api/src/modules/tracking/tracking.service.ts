@@ -5,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { InjectionSite } from '@prisma/client';
 import { CreateProtocolDto, LogDoseDto, LogOutcomeDto, LogEventDto } from './dto';
 
 @Injectable()
@@ -18,21 +19,22 @@ export class TrackingService {
       data: {
         userId,
         name: dto.name,
-        description: dto.description,
+        notes: dto.description,
         startDate: new Date(dto.startDate),
         endDate: dto.endDate ? new Date(dto.endDate) : null,
         status: 'ACTIVE',
-        compounds: {
+        peptides: {
           create: dto.compounds.map((c) => ({
             peptideId: c.peptideId,
-            doseMcg: c.doseMcg,
+            dose: c.doseMcg,
+            unit: c.route ?? 'mcg',
             frequency: c.frequency,
-            route: c.route,
-            timeOfDay: c.timeOfDay,
+            timeOfDay: c.timeOfDay ? (c.timeOfDay as import('@prisma/client').TimeOfDay) : 'AM',
+            laneUsed: 'CLINICAL' as import('@prisma/client').SourceLane,
           })),
         },
       },
-      include: { compounds: { include: { peptide: true } } },
+      include: { peptides: { include: { peptide: true } } },
     });
 
     this.logger.log(`Protocol created: ${protocol.id} for user ${userId}`);
@@ -43,13 +45,13 @@ export class TrackingService {
     return this.prisma.userProtocol.findMany({
       where: { userId },
       include: {
-        compounds: {
+        peptides: {
           include: {
             peptide: { select: { id: true, name: true, slug: true } },
           },
         },
         _count: {
-          select: { doses: true, outcomes: true, events: true },
+          select: { events: true },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -60,12 +62,10 @@ export class TrackingService {
     const protocol = await this.prisma.userProtocol.findUnique({
       where: { id: protocolId },
       include: {
-        compounds: {
+        peptides: {
           include: { peptide: true },
         },
-        doses: { orderBy: { takenAt: 'desc' }, take: 50 },
-        outcomes: { orderBy: { recordedAt: 'desc' }, take: 50 },
-        events: { orderBy: { occurredAt: 'desc' }, take: 50 },
+        events: { orderBy: { createdAt: 'desc' }, take: 50 },
       },
     });
 
@@ -87,10 +87,10 @@ export class TrackingService {
       where: { id: protocolId },
       data: {
         name: data.name,
-        description: data.description,
+        notes: data.description,
         endDate: data.endDate ? new Date(data.endDate) : undefined,
       },
-      include: { compounds: { include: { peptide: true } } },
+      include: { peptides: { include: { peptide: true } } },
     });
   }
 
@@ -99,24 +99,36 @@ export class TrackingService {
 
     await this.prisma.userProtocol.update({
       where: { id: protocolId },
-      data: { status: 'ARCHIVED' },
+      data: { status: 'PAUSED' },
     });
 
-    this.logger.log(`Protocol archived: ${protocolId}`);
+    this.logger.log(`Protocol paused (soft-deleted): ${protocolId}`);
     return { deleted: true };
   }
 
   async logDose(userId: string, dto: LogDoseDto) {
-    await this.verifyProtocolOwnership(userId, dto.protocolId);
+    // Find the userProtocolPeptide for this protocol+peptide combination
+    const protocolPeptide = await this.prisma.userProtocolPeptide.findFirst({
+      where: {
+        userProtocolId: dto.protocolId,
+        peptideId: dto.peptideId,
+        userProtocol: { userId },
+      },
+    });
+
+    if (!protocolPeptide) {
+      // Verify ownership at least
+      await this.verifyProtocolOwnership(userId, dto.protocolId);
+      throw new NotFoundException('Peptide not found in this protocol');
+    }
+
+    const site = dto.site ? (dto.site as InjectionSite) : null;
 
     const dose = await this.prisma.doseLog.create({
       data: {
-        protocolId: dto.protocolId,
-        peptideId: dto.peptideId,
-        amount: dto.amount,
-        unit: dto.unit,
+        userProtocolPeptideId: protocolPeptide.id,
         takenAt: new Date(dto.takenAt),
-        site: dto.site,
+        site,
         notes: dto.notes,
       },
     });
@@ -128,15 +140,13 @@ export class TrackingService {
   async logOutcome(userId: string, dto: LogOutcomeDto) {
     await this.verifyProtocolOwnership(userId, dto.protocolId);
 
-    const outcome = await this.prisma.outcomeLog.create({
+    const outcome = await this.prisma.outcomeMetric.create({
       data: {
-        protocolId: dto.protocolId,
-        metric: dto.metric,
-        value: dto.value,
-        unit: dto.unit,
+        userId,
+        type: 'CUSTOM',
+        valueNumber: dto.value,
+        valueText: dto.metric,
         recordedAt: new Date(dto.recordedAt),
-        subjectiveRating: dto.subjectiveRating,
-        notes: dto.notes,
       },
     });
 
@@ -147,15 +157,18 @@ export class TrackingService {
   async logEvent(userId: string, dto: LogEventDto) {
     await this.verifyProtocolOwnership(userId, dto.protocolId);
 
-    const event = await this.prisma.eventLog.create({
+    const event = await this.prisma.protocolEvent.create({
       data: {
-        protocolId: dto.protocolId,
-        type: dto.type,
-        title: dto.title,
-        description: dto.description,
-        severity: dto.severity,
-        durationHours: dto.durationHours,
-        occurredAt: new Date(dto.occurredAt),
+        userProtocolId: dto.protocolId,
+        type: 'NOTE',
+        payload: {
+          title: dto.title,
+          description: dto.description,
+          severity: dto.severity,
+          durationHours: dto.durationHours,
+          occurredAt: dto.occurredAt,
+          eventType: dto.type,
+        },
       },
     });
 
@@ -166,30 +179,38 @@ export class TrackingService {
   async getProtocolTimeline(userId: string, protocolId: string) {
     await this.verifyProtocolOwnership(userId, protocolId);
 
-    const [doses, outcomes, events] = await Promise.all([
-      this.prisma.doseLog.findMany({
-        where: { protocolId },
-        orderBy: { takenAt: 'desc' },
+    const [protocolPeptides, events] = await Promise.all([
+      this.prisma.userProtocolPeptide.findMany({
+        where: { userProtocolId: protocolId },
         include: {
+          doseLogs: { orderBy: { takenAt: 'desc' }, take: 50 },
           peptide: { select: { id: true, name: true, slug: true } },
         },
       }),
-      this.prisma.outcomeLog.findMany({
-        where: { protocolId },
-        orderBy: { recordedAt: 'desc' },
-      }),
-      this.prisma.eventLog.findMany({
-        where: { protocolId },
-        orderBy: { occurredAt: 'desc' },
+      this.prisma.protocolEvent.findMany({
+        where: { userProtocolId: protocolId },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
       }),
     ]);
 
-    // Merge into a unified timeline sorted by date
-    const timeline = [
-      ...doses.map((d) => ({ kind: 'dose' as const, date: d.takenAt, data: d })),
-      ...outcomes.map((o) => ({ kind: 'outcome' as const, date: o.recordedAt, data: o })),
-      ...events.map((e) => ({ kind: 'event' as const, date: e.occurredAt, data: e })),
-    ].sort((a, b) => b.date.getTime() - a.date.getTime());
+    const doses = protocolPeptides.flatMap((pp) =>
+      pp.doseLogs.map((d) => ({
+        kind: 'dose' as const,
+        date: d.takenAt,
+        data: { ...d, peptide: pp.peptide },
+      })),
+    );
+
+    const eventItems = events.map((e) => ({
+      kind: 'event' as const,
+      date: e.createdAt,
+      data: e,
+    }));
+
+    const timeline = [...doses, ...eventItems].sort(
+      (a, b) => b.date.getTime() - a.date.getTime(),
+    );
 
     return { protocolId, timeline };
   }

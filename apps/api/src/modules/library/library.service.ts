@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SearchPeptidesDto } from './dto';
 
-interface PaginatedResult<T> {
+export interface PaginatedResult<T> {
   readonly items: readonly T[];
   readonly total: number;
   readonly page: number;
@@ -27,24 +27,19 @@ export class LibraryService {
       where.OR = [
         { name: { contains: dto.query, mode: 'insensitive' } },
         { description: { contains: dto.query, mode: 'insensitive' } },
-        { aliases: { has: dto.query } },
       ];
     }
 
     if (dto.category) {
-      where.category = { slug: dto.category };
+      where.category = dto.category;
     }
 
     if (dto.route) {
-      where.routes = { has: dto.route };
+      where.route = dto.route;
     }
 
     if (dto.status) {
       where.status = dto.status;
-    }
-
-    if (dto.goal) {
-      where.goals = { has: dto.goal };
     }
 
     const [items, total] = await Promise.all([
@@ -53,7 +48,7 @@ export class LibraryService {
         skip,
         take: limit,
         include: {
-          category: { select: { id: true, name: true, slug: true } },
+          clinicalLanes: { take: 1 },
         },
         orderBy: { name: 'asc' },
       }),
@@ -73,14 +68,13 @@ export class LibraryService {
     const peptide = await this.prisma.peptide.findUnique({
       where: { slug },
       include: {
-        category: true,
-        lanes: {
-          orderBy: { order: 'asc' },
-        },
+        clinicalLanes: true,
+        expertLanes: true,
+        experimentalLanes: true,
         contraindications: true,
-        interactions: {
+        interactionsAsA: {
           include: {
-            targetPeptide: {
+            peptideB: {
               select: { id: true, name: true, slug: true },
             },
           },
@@ -97,11 +91,16 @@ export class LibraryService {
   }
 
   async listCategories(): Promise<unknown[]> {
-    return this.prisma.category.findMany({
-      include: {
-        _count: { select: { peptides: true } },
-      },
-      orderBy: { name: 'asc' },
+    // Return distinct categories with counts
+    const groups = await this.prisma.peptide.groupBy({
+      by: ['category'],
+      _count: { category: true },
+      orderBy: { category: 'asc' },
     });
+
+    return groups.map((g) => ({
+      category: g.category,
+      count: g._count.category,
+    }));
   }
 }

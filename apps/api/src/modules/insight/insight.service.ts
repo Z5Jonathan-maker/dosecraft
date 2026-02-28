@@ -16,7 +16,7 @@ interface MetricSummary {
   readonly latestValue: number;
 }
 
-interface UserInsights {
+export interface UserInsights {
   readonly activeProtocols: number;
   readonly totalDosesLogged: number;
   readonly totalOutcomesLogged: number;
@@ -25,7 +25,7 @@ interface UserInsights {
   readonly recentEvents: readonly unknown[];
 }
 
-interface ProtocolAnalysis {
+export interface ProtocolAnalysis {
   readonly protocolId: string;
   readonly protocolName: string;
   readonly durationDays: number;
@@ -49,18 +49,22 @@ export class InsightService {
           where: { userId, status: 'ACTIVE' },
         }),
         this.prisma.doseLog.count({
-          where: { protocol: { userId } },
+          where: {
+            userProtocolPeptide: {
+              userProtocol: { userId },
+            },
+          },
         }),
-        this.prisma.outcomeLog.count({
-          where: { protocol: { userId } },
+        this.prisma.outcomeMetric.count({
+          where: { userId },
         }),
-        this.prisma.eventLog.findMany({
-          where: { protocol: { userId } },
-          orderBy: { occurredAt: 'desc' },
+        this.prisma.protocolEvent.findMany({
+          where: { userProtocol: { userId } },
+          orderBy: { createdAt: 'desc' },
           take: 10,
         }),
-        this.prisma.outcomeLog.findMany({
-          where: { protocol: { userId } },
+        this.prisma.outcomeMetric.findMany({
+          where: { userId },
           orderBy: { recordedAt: 'desc' },
           take: 200,
         }),
@@ -69,8 +73,14 @@ export class InsightService {
     // Calculate adherence rate (doses logged / expected doses in active protocols)
     const adherenceRate = await this.calculateAdherenceRate(userId);
 
-    // Group outcomes by metric and compute summaries
-    const metricGroups = this.groupByMetric(outcomes);
+    // Group outcomes by type and compute summaries
+    const metricGroups = this.groupByMetric(
+      outcomes.map((o) => ({
+        metric: o.type,
+        value: o.valueNumber ?? 0,
+        recordedAt: o.recordedAt,
+      })),
+    );
     const topMetrics = Object.entries(metricGroups)
       .map(([metric, values]) => this.computeMetricSummary(metric, values))
       .sort((a, b) => b.count - a.count)
@@ -93,10 +103,8 @@ export class InsightService {
     const protocol = await this.prisma.userProtocol.findUnique({
       where: { id: protocolId },
       include: {
-        compounds: true,
-        doses: { orderBy: { takenAt: 'asc' } },
-        outcomes: { orderBy: { recordedAt: 'asc' } },
-        events: { orderBy: { occurredAt: 'asc' } },
+        peptides: true,
+        events: { orderBy: { createdAt: 'asc' } },
       },
     });
 
@@ -114,61 +122,84 @@ export class InsightService {
       (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
     );
 
+    // Get dose logs for this protocol
+    const doseLogs = await this.prisma.doseLog.findMany({
+      where: {
+        userProtocolPeptide: { userProtocolId: protocolId },
+      },
+      orderBy: { takenAt: 'asc' },
+    });
+
+    // Get outcome metrics for this user in the protocol period
+    const outcomeMetrics = await this.prisma.outcomeMetric.findMany({
+      where: {
+        userId,
+        recordedAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      orderBy: { recordedAt: 'asc' },
+    });
+
     // Metric summaries
-    const metricGroups = this.groupByMetric(protocol.outcomes);
+    const metricGroups = this.groupByMetric(
+      outcomeMetrics.map((o) => ({
+        metric: o.type,
+        value: o.valueNumber ?? 0,
+        recordedAt: o.recordedAt,
+      })),
+    );
     const metricSummaries = Object.entries(metricGroups).map(
       ([metric, values]) => this.computeMetricSummary(metric, values),
     );
 
-    // Side effect analysis
+    // Side effect analysis from protocol events
     const sideEffectEvents = protocol.events.filter(
-      (e) => e.type === 'SIDE_EFFECT',
+      (e) => (e.payload as Record<string, unknown>)?.['eventType'] === 'SIDE_EFFECT',
     );
     const sideEffectMap = new Map<string, { severity: string; count: number }>();
     for (const se of sideEffectEvents) {
-      const existing = sideEffectMap.get(se.title);
+      const payload = se.payload as Record<string, unknown>;
+      const title = String(payload?.['title'] ?? 'Unknown');
+      const severity = String(payload?.['severity'] ?? 'LOW');
+      const existing = sideEffectMap.get(title);
       if (existing) {
-        sideEffectMap.set(se.title, {
-          severity: se.severity ?? existing.severity,
-          count: existing.count + 1,
-        });
+        sideEffectMap.set(title, { severity, count: existing.count + 1 });
       } else {
-        sideEffectMap.set(se.title, {
-          severity: se.severity ?? 'LOW',
-          count: 1,
-        });
+        sideEffectMap.set(title, { severity, count: 1 });
       }
     }
 
     const sideEffects = Array.from(sideEffectMap.entries()).map(
-      ([title, data]) => ({
-        title,
-        severity: data.severity,
-        count: data.count,
-      }),
-    );
-
-    // Basic correlation analysis (simplified)
-    const correlations = this.analyzeCorrelations(
-      protocol.doses,
-      protocol.outcomes,
+      ([title, data]) => ({ title, severity: data.severity, count: data.count }),
     );
 
     // Adherence rate for this protocol
     const expectedDoses = this.estimateExpectedDoses(
-      protocol.compounds,
+      protocol.peptides.map((p) => ({ frequency: p.frequency })),
       durationDays,
     );
     const adherenceRate =
       expectedDoses > 0
-        ? Math.min(1, protocol.doses.length / expectedDoses)
+        ? Math.min(1, doseLogs.length / expectedDoses)
         : 0;
+
+    // Basic correlation analysis
+    const correlations = this.analyzeCorrelations(
+      doseLogs.map((d) => ({ takenAt: d.takenAt, amount: 1 })),
+      outcomeMetrics.map((o) => ({
+        recordedAt: o.recordedAt,
+        metric: o.type,
+        value: o.valueNumber ?? 0,
+      })),
+    );
 
     return {
       protocolId: protocol.id,
       protocolName: protocol.name,
       durationDays,
-      totalDoses: protocol.doses.length,
+      totalDoses: doseLogs.length,
       adherenceRate: Math.round(adherenceRate * 100) / 100,
       metricSummaries,
       sideEffects,
@@ -180,8 +211,8 @@ export class InsightService {
     const activeProtocols = await this.prisma.userProtocol.findMany({
       where: { userId, status: 'ACTIVE' },
       include: {
-        compounds: true,
-        _count: { select: { doses: true } },
+        peptides: true,
+        _count: { select: { events: true } },
       },
     });
 
@@ -195,11 +226,17 @@ export class InsightService {
         (Date.now() - protocol.startDate.getTime()) / (1000 * 60 * 60 * 24),
       );
       const expected = this.estimateExpectedDoses(
-        protocol.compounds,
+        protocol.peptides.map((p) => ({ frequency: p.frequency })),
         daysSinceStart,
       );
       totalExpected += expected;
-      totalActual += protocol._count.doses;
+
+      const actual = await this.prisma.doseLog.count({
+        where: {
+          userProtocolPeptide: { userProtocolId: protocol.id },
+        },
+      });
+      totalActual += actual;
     }
 
     return totalExpected > 0
@@ -258,7 +295,6 @@ export class InsightService {
     const max = Math.max(...nums);
     const latestValue = sorted[sorted.length - 1]?.value ?? 0;
 
-    // Trend analysis: compare first half average to second half average
     let trend: MetricSummary['trend'] = 'insufficient_data';
     if (count >= 4) {
       const mid = Math.floor(count / 2);
@@ -290,14 +326,14 @@ export class InsightService {
       return [];
     }
 
-    // Group outcomes by metric and check if higher dosing periods correlate with better outcomes
-    const metricGroups = this.groupByMetric(outcomes);
+    const metricGroups = this.groupByMetric(
+      outcomes.map((o) => ({ metric: o.metric, value: o.value, recordedAt: o.recordedAt })),
+    );
     const correlations: { metric: string; direction: string; confidence: string }[] = [];
 
     for (const [metric, values] of Object.entries(metricGroups)) {
       if (values.length < 5) continue;
 
-      // Simple analysis: compare outcome values in weeks with high vs low dose counts
       const weeklyDoseCounts = this.getWeeklyDoseCounts(doses);
       const weeklyOutcomes = this.getWeeklyAverages(values);
 
@@ -307,8 +343,8 @@ export class InsightService {
 
       if (commonWeeks.length < 3) continue;
 
-      const doseValues = commonWeeks.map((w) => weeklyDoseCounts[w]);
-      const outcomeValues = commonWeeks.map((w) => weeklyOutcomes[w]);
+      const doseValues = commonWeeks.map((w) => weeklyDoseCounts[w] ?? 0);
+      const outcomeValues = commonWeeks.map((w) => weeklyOutcomes[w] ?? 0);
 
       const correlation = this.pearsonCorrelation(doseValues, outcomeValues);
 
@@ -374,7 +410,7 @@ export class InsightService {
 
     const sumX = x.reduce((a, b) => a + b, 0);
     const sumY = y.reduce((a, b) => a + b, 0);
-    const sumXY = x.reduce((acc, xi, i) => acc + xi * y[i], 0);
+    const sumXY = x.reduce((acc, xi, i) => acc + xi * (y[i] ?? 0), 0);
     const sumX2 = x.reduce((acc, xi) => acc + xi * xi, 0);
     const sumY2 = y.reduce((acc, yi) => acc + yi * yi, 0);
 

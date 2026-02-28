@@ -1,38 +1,38 @@
 import {
   Injectable,
   NotFoundException,
-  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SuggestProtocolDto, RiskAppetite, PersonalizeDto } from './dto';
 
-/** Maps risk appetite to the maximum lane tier accessible */
-const RISK_LANE_MAP: Record<RiskAppetite, number> = {
-  [RiskAppetite.CONSERVATIVE]: 1,
-  [RiskAppetite.MODERATE]: 2,
-  [RiskAppetite.AGGRESSIVE]: 3,
+/** Maps risk appetite to the type of lane to prefer */
+const RISK_LANE_PRIORITY: Record<RiskAppetite, ('clinicalLanes' | 'expertLanes' | 'experimentalLanes')[]> = {
+  [RiskAppetite.CONSERVATIVE]: ['clinicalLanes'],
+  [RiskAppetite.MODERATE]: ['clinicalLanes', 'expertLanes'],
+  [RiskAppetite.AGGRESSIVE]: ['clinicalLanes', 'expertLanes', 'experimentalLanes'],
 };
 
-interface SuggestedCompound {
+export interface SuggestedCompound {
   readonly peptideId: string;
   readonly peptideName: string;
   readonly peptideSlug: string;
-  readonly lane: number;
-  readonly doseMcg: number;
+  readonly laneType: string;
+  readonly dose: number;
+  readonly unit: string;
   readonly frequency: string;
   readonly route: string;
   readonly rationale: string;
 }
 
-interface InteractionWarning {
+export interface InteractionWarning {
   readonly peptideA: string;
   readonly peptideB: string;
   readonly severity: string;
-  readonly description: string;
+  readonly notes: string;
 }
 
-interface ProtocolSuggestion {
+export interface ProtocolSuggestion {
   readonly compounds: readonly SuggestedCompound[];
   readonly warnings: readonly InteractionWarning[];
   readonly blockedReasons: readonly string[];
@@ -50,29 +50,20 @@ export class ProtocolEngineService {
     userId: string,
     dto: SuggestProtocolDto,
   ): Promise<ProtocolSuggestion> {
-    const maxLane = RISK_LANE_MAP[dto.riskAppetite];
+    const allowedLaneTypes = RISK_LANE_PRIORITY[dto.riskAppetite];
     const maxCompounds = dto.maxCompounds ?? 3;
     const maxInjections = dto.maxInjectionsPerWeek ?? 7;
 
-    // 1. Find peptides matching goals within allowed lane tiers
+    // 1. Find peptides and include lanes based on risk appetite
     const candidatePeptides = await this.prisma.peptide.findMany({
-      where: {
-        goals: { hasSome: dto.goals },
-        lanes: {
-          some: {
-            tier: { lte: maxLane },
-          },
-        },
-      },
       include: {
-        lanes: {
-          where: { tier: { lte: maxLane } },
-          orderBy: { tier: 'asc' },
-        },
+        clinicalLanes: allowedLaneTypes.includes('clinicalLanes'),
+        expertLanes: allowedLaneTypes.includes('expertLanes'),
+        experimentalLanes: allowedLaneTypes.includes('experimentalLanes'),
         contraindications: true,
-        interactions: {
+        interactionsAsA: {
           include: {
-            targetPeptide: { select: { id: true, name: true } },
+            peptideB: { select: { id: true, name: true } },
           },
         },
       },
@@ -80,35 +71,35 @@ export class ProtocolEngineService {
 
     // 2. Filter out peptides with contraindications matching user conditions
     const userConditions = new Set(dto.conditions ?? []);
+    const currentPeptideIds = new Set(dto.currentPeptides ?? []);
+    const blockedReasons: string[] = [];
+    const warnings: InteractionWarning[] = [];
+
     const filtered = candidatePeptides.filter((p) => {
       const hasContraindication = p.contraindications.some((c) =>
-        userConditions.has(c.conditionId),
+        userConditions.has(c.condition),
       );
       return !hasContraindication;
     });
 
     // 3. Check interactions with currently used peptides
-    const currentPeptideIds = new Set(dto.currentPeptides ?? []);
-    const blockedReasons: string[] = [];
-    const warnings: InteractionWarning[] = [];
-
     const safe = filtered.filter((p) => {
       let blocked = false;
 
-      for (const interaction of p.interactions) {
-        if (!currentPeptideIds.has(interaction.targetPeptideId)) continue;
+      for (const interaction of p.interactionsAsA) {
+        if (!currentPeptideIds.has(interaction.peptideBId)) continue;
 
-        if (interaction.severity === 'AVOID') {
+        if (interaction.type === 'AVOID') {
           blockedReasons.push(
-            `${p.name} blocked: AVOID interaction with ${interaction.targetPeptide.name} — ${interaction.description}`,
+            `${p.name} blocked: AVOID interaction with ${interaction.peptideB.name}`,
           );
           blocked = true;
-        } else if (interaction.severity === 'CAUTION') {
+        } else if (interaction.type === 'CAUTION') {
           warnings.push({
             peptideA: p.name,
-            peptideB: interaction.targetPeptide.name,
+            peptideB: interaction.peptideB.name,
             severity: 'CAUTION',
-            description: interaction.description,
+            notes: interaction.notes ?? '',
           });
         }
       }
@@ -116,12 +107,16 @@ export class ProtocolEngineService {
       return !blocked;
     });
 
-    // 4. Score and rank candidates, take top N
+    // 4. Score and rank candidates: prefer peptides that match goals in their indication/description
     const scored = safe.map((p) => {
-      const goalOverlap = dto.goals.filter((g) => p.goals.includes(g)).length;
-      const bestLane = p.lanes[0];
-      return { peptide: p, lane: bestLane, score: goalOverlap * 10 + (4 - bestLane.tier) };
-    });
+      const goalOverlap = dto.goals.filter((g) =>
+        (p.description ?? '').toLowerCase().includes(g.toLowerCase()),
+      ).length;
+
+      // Find the best available lane
+      const bestLane = this.getBestLane(p, allowedLaneTypes);
+      return { peptide: p, bestLane, score: goalOverlap * 10 + (bestLane ? 1 : 0) };
+    }).filter((s) => s.bestLane !== null);
 
     scored.sort((a, b) => b.score - a.score);
     const selected = scored.slice(0, maxCompounds);
@@ -130,8 +125,9 @@ export class ProtocolEngineService {
     let totalInjections = 0;
     const compounds: SuggestedCompound[] = [];
 
-    for (const { peptide, lane } of selected) {
-      const injectionsForThis = this.estimateWeeklyInjections(lane.frequency);
+    for (const { peptide, bestLane } of selected) {
+      if (!bestLane) continue;
+      const injectionsForThis = this.estimateWeeklyInjections(bestLane.frequency);
 
       if (totalInjections + injectionsForThis > maxInjections) {
         blockedReasons.push(
@@ -146,17 +142,18 @@ export class ProtocolEngineService {
         peptideId: peptide.id,
         peptideName: peptide.name,
         peptideSlug: peptide.slug,
-        lane: lane.tier,
-        doseMcg: lane.doseMcg,
-        frequency: lane.frequency,
-        route: lane.route,
-        rationale: `Matches goals: ${dto.goals.filter((g) => peptide.goals.includes(g)).join(', ')}. Lane ${lane.tier} (${dto.riskAppetite}).`,
+        laneType: bestLane.laneType,
+        dose: bestLane.doseMin,
+        unit: bestLane.unit,
+        frequency: bestLane.frequency,
+        route: peptide.route,
+        rationale: `Matches goals in indication: ${bestLane.indication ?? 'general'}. Lane: ${bestLane.laneType} (${dto.riskAppetite}).`,
       });
     }
 
     // 6. Estimate cost if budget constraint provided
     const estimatedMonthlyCost = dto.budget !== undefined
-      ? compounds.reduce((sum, c) => sum + (c.doseMcg * 0.01 * this.estimateWeeklyInjections(c.frequency) * 4.33), 0)
+      ? compounds.reduce((sum, c) => sum + (c.dose * 0.01 * this.estimateWeeklyInjections(c.frequency) * 4.33), 0)
       : null;
 
     if (dto.budget !== undefined && estimatedMonthlyCost !== null && estimatedMonthlyCost > dto.budget) {
@@ -183,19 +180,25 @@ export class ProtocolEngineService {
     templateId: string,
     dto: PersonalizeDto,
   ): Promise<ProtocolSuggestion> {
+    const allowedLaneTypes = dto.riskAppetite
+      ? RISK_LANE_PRIORITY[dto.riskAppetite]
+      : RISK_LANE_PRIORITY[RiskAppetite.MODERATE];
+
     // Load the template protocol
     const template = await this.prisma.protocolTemplate.findUnique({
       where: { id: templateId },
       include: {
-        compounds: {
+        steps: {
           include: {
             peptide: {
               include: {
-                lanes: true,
+                clinicalLanes: true,
+                expertLanes: true,
+                experimentalLanes: true,
                 contraindications: true,
-                interactions: {
+                interactionsAsA: {
                   include: {
-                    targetPeptide: { select: { id: true, name: true } },
+                    peptideB: { select: { id: true, name: true } },
                   },
                 },
               },
@@ -209,10 +212,7 @@ export class ProtocolEngineService {
       throw new NotFoundException(`Protocol template "${templateId}" not found`);
     }
 
-    const maxLane = dto.riskAppetite
-      ? RISK_LANE_MAP[dto.riskAppetite]
-      : 2; // default moderate
-    const maxCompounds = dto.maxCompounds ?? template.compounds.length;
+    const maxCompounds = dto.maxCompounds ?? template.steps.length;
     const maxInjections = dto.maxInjectionsPerWeek ?? 7;
 
     const userConditions = new Set(dto.conditions ?? []);
@@ -223,51 +223,49 @@ export class ProtocolEngineService {
     const compounds: SuggestedCompound[] = [];
     let totalInjections = 0;
 
-    for (const tc of template.compounds) {
+    for (const step of template.steps) {
       if (compounds.length >= maxCompounds) {
-        blockedReasons.push(`${tc.peptide.name} skipped: maxCompounds (${maxCompounds}) reached`);
+        blockedReasons.push(`${step.peptide.name} skipped: maxCompounds (${maxCompounds}) reached`);
         continue;
       }
 
       // Check contraindications
-      const hasContra = tc.peptide.contraindications.some((c) =>
-        userConditions.has(c.conditionId),
+      const hasContra = step.peptide.contraindications.some((c) =>
+        userConditions.has(c.condition),
       );
       if (hasContra) {
-        blockedReasons.push(`${tc.peptide.name} blocked: contraindication with user condition`);
+        blockedReasons.push(`${step.peptide.name} blocked: contraindication with user condition`);
         continue;
       }
 
       // Check interactions
       let blocked = false;
-      for (const interaction of tc.peptide.interactions) {
-        if (!currentPeptideIds.has(interaction.targetPeptideId)) continue;
+      for (const interaction of step.peptide.interactionsAsA) {
+        if (!currentPeptideIds.has(interaction.peptideBId)) continue;
 
-        if (interaction.severity === 'AVOID') {
+        if (interaction.type === 'AVOID') {
           blockedReasons.push(
-            `${tc.peptide.name} blocked: AVOID interaction with ${interaction.targetPeptide.name}`,
+            `${step.peptide.name} blocked: AVOID interaction with ${interaction.peptideB.name}`,
           );
           blocked = true;
           break;
-        } else if (interaction.severity === 'CAUTION') {
+        } else if (interaction.type === 'CAUTION') {
           warnings.push({
-            peptideA: tc.peptide.name,
-            peptideB: interaction.targetPeptide.name,
+            peptideA: step.peptide.name,
+            peptideB: interaction.peptideB.name,
             severity: 'CAUTION',
-            description: interaction.description,
+            notes: interaction.notes ?? '',
           });
         }
       }
       if (blocked) continue;
 
       // Find appropriate lane
-      const allowedLane = tc.peptide.lanes
-        .filter((l) => l.tier <= maxLane)
-        .sort((a, b) => a.tier - b.tier)[0];
+      const allowedLane = this.getBestLane(step.peptide, allowedLaneTypes);
 
       if (!allowedLane) {
         blockedReasons.push(
-          `${tc.peptide.name} blocked: no lane available at ${dto.riskAppetite ?? 'MODERATE'} risk level`,
+          `${step.peptide.name} blocked: no lane available at ${dto.riskAppetite ?? 'MODERATE'} risk level`,
         );
         continue;
       }
@@ -275,7 +273,7 @@ export class ProtocolEngineService {
       const injectionsForThis = this.estimateWeeklyInjections(allowedLane.frequency);
       if (totalInjections + injectionsForThis > maxInjections) {
         blockedReasons.push(
-          `${tc.peptide.name} skipped: would exceed ${maxInjections} injections/week limit`,
+          `${step.peptide.name} skipped: would exceed ${maxInjections} injections/week limit`,
         );
         continue;
       }
@@ -283,19 +281,20 @@ export class ProtocolEngineService {
       totalInjections += injectionsForThis;
 
       compounds.push({
-        peptideId: tc.peptide.id,
-        peptideName: tc.peptide.name,
-        peptideSlug: tc.peptide.slug,
-        lane: allowedLane.tier,
-        doseMcg: allowedLane.doseMcg,
+        peptideId: step.peptide.id,
+        peptideName: step.peptide.name,
+        peptideSlug: step.peptide.slug,
+        laneType: allowedLane.laneType,
+        dose: allowedLane.doseMin,
+        unit: allowedLane.unit,
         frequency: allowedLane.frequency,
-        route: allowedLane.route,
-        rationale: `From template "${template.name}", personalized to lane ${allowedLane.tier}.`,
+        route: step.peptide.route,
+        rationale: `From template "${template.name}", personalized to lane ${allowedLane.laneType}.`,
       });
     }
 
     const estimatedMonthlyCost = dto.budget !== undefined
-      ? compounds.reduce((sum, c) => sum + (c.doseMcg * 0.01 * this.estimateWeeklyInjections(c.frequency) * 4.33), 0)
+      ? compounds.reduce((sum, c) => sum + (c.dose * 0.01 * this.estimateWeeklyInjections(c.frequency) * 4.33), 0)
       : null;
 
     if (dto.budget !== undefined && estimatedMonthlyCost !== null && estimatedMonthlyCost > dto.budget) {
@@ -305,7 +304,7 @@ export class ProtocolEngineService {
     }
 
     this.logger.log(
-      `Template "${template.name}" personalized for user ${userId}: ${compounds.length}/${template.compounds.length} compounds kept`,
+      `Template "${template.name}" personalized for user ${userId}: ${compounds.length}/${template.steps.length} compounds kept`,
     );
 
     return {
@@ -315,6 +314,29 @@ export class ProtocolEngineService {
       totalInjectionsPerWeek: totalInjections,
       estimatedMonthlyCost,
     };
+  }
+
+  private getBestLane(
+    peptide: {
+      clinicalLanes: { doseMin: number; doseMax: number; unit: string; frequency: string; indication: string }[];
+      expertLanes: { dosePattern: unknown; sourceTags: string[] }[];
+      experimentalLanes: { dosePattern: unknown }[];
+    },
+    allowedLaneTypes: ('clinicalLanes' | 'expertLanes' | 'experimentalLanes')[],
+  ): { laneType: string; doseMin: number; unit: string; frequency: string; indication: string } | null {
+    for (const laneType of allowedLaneTypes) {
+      if (laneType === 'clinicalLanes' && peptide.clinicalLanes.length > 0) {
+        const lane = peptide.clinicalLanes[0];
+        return {
+          laneType: 'clinical',
+          doseMin: lane.doseMin,
+          unit: lane.unit,
+          frequency: lane.frequency,
+          indication: lane.indication,
+        };
+      }
+    }
+    return null;
   }
 
   private estimateWeeklyInjections(frequency: string): number {
