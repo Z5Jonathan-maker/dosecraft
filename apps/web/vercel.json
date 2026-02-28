@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "installCommand": "npm ci",
-  "buildCommand": "npm run build --workspace=@dosecraft/web",
-  "outputDirectory": "apps/web/.next"
+  "installCommand": "cd ../.. && npm ci",
+  "buildCommand": "cd ../.. && npm run build --workspace=@dosecraft/web",
+  "outputDirectory": ".next"
 }
