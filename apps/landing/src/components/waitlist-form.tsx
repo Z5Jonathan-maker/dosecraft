@@ -1,8 +1,17 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { motion } from "framer-motion";
-import { ArrowRight, CheckCircle, Loader2, AlertCircle, Users } from "lucide-react";
+import { useState, useRef, useEffect, type FormEvent } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import {
+  ArrowRight,
+  CheckCircle,
+  Loader2,
+  AlertCircle,
+  Users,
+} from "lucide-react";
+
+gsap.registerPlugin(ScrollTrigger);
 
 type FormState = "idle" | "loading" | "success" | "error";
 
@@ -10,9 +19,75 @@ export default function WaitlistForm() {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<FormState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const sectionRef = useRef<HTMLElement>(null);
+  const successRef = useRef<HTMLDivElement>(null);
 
   const isValidEmail = (e: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+  useEffect(() => {
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    if (prefersReduced || !sectionRef.current) return;
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        ".waitlist-content",
+        { opacity: 0, y: 40 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 80%",
+            toggleActions: "play none none none",
+          },
+        }
+      );
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  /* Success pulse animation */
+  useEffect(() => {
+    if (state === "success" && successRef.current) {
+      const prefersReduced = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+      if (prefersReduced) return;
+
+      gsap.fromTo(
+        successRef.current,
+        { scale: 0.9, opacity: 0 },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.5,
+          ease: "back.out(1.7)",
+        }
+      );
+
+      /* Pulse ring effect */
+      const ring = successRef.current.querySelector(".success-ring");
+      if (ring) {
+        gsap.fromTo(
+          ring,
+          { scale: 0.5, opacity: 1 },
+          {
+            scale: 2.5,
+            opacity: 0,
+            duration: 1,
+            ease: "power2.out",
+          }
+        );
+      }
+    }
+  }, [state]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -48,56 +123,62 @@ export default function WaitlistForm() {
       setState("success");
       setEmail("");
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Something went wrong.");
+      setErrorMsg(
+        err instanceof Error ? err.message : "Something went wrong."
+      );
       setState("error");
     }
   }
 
   return (
-    <section id="waitlist" className="relative py-24 sm:py-32 px-4">
-      {/* Background glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-dc-orange/[0.06] rounded-full blur-[150px]" />
+    <section
+      id="waitlist"
+      ref={sectionRef}
+      className="relative py-24 sm:py-32 px-4 aurora-bg"
+    >
+      {/* Additional aurora glow blobs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-dc-orange/[0.06] rounded-full blur-[180px]" />
+        <div className="absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-dc-cyan/[0.04] rounded-full blur-[100px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] bg-dc-purple/[0.04] rounded-full blur-[100px]" />
       </div>
 
-      <div className="relative max-w-2xl mx-auto text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.6 }}
-        >
-          <p className="text-sm font-medium text-dc-orange uppercase tracking-wider mb-3">
-            Early Access
-          </p>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-[family-name:var(--font-space)] tracking-tight">
-            Get Early Access
-          </h2>
-          <p className="mt-5 text-dc-text-muted text-lg max-w-lg mx-auto">
-            Be the first to run protocols with DoseCraft.
-            Early members get founder pricing and direct input on the roadmap.
-          </p>
-        </motion.div>
+      <div className="waitlist-content relative z-10 max-w-2xl mx-auto text-center">
+        <p className="text-sm font-medium text-dc-orange uppercase tracking-wider mb-3">
+          Early Access
+        </p>
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-[family-name:var(--font-space)] tracking-tight">
+          Get Early Access
+        </h2>
+        <p className="mt-5 text-dc-text-muted text-lg max-w-lg mx-auto">
+          Be the first to run protocols with DoseCraft. Early members get
+          founder pricing and direct input on the roadmap.
+        </p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6, delay: 0.15 }}
-          className="mt-10"
-        >
+        <div className="mt-10">
           {state === "success" ? (
-            <div className="glass-card p-8 glow-green">
+            <div
+              ref={successRef}
+              className="glass-card p-8 glow-green relative overflow-hidden"
+            >
+              {/* Pulse ring */}
+              <div className="success-ring absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full border-2 border-dc-green/50 pointer-events-none" />
+
               <CheckCircle className="w-10 h-10 text-dc-green mx-auto mb-4" />
               <h3 className="text-xl font-bold font-[family-name:var(--font-space)] text-dc-text mb-2">
                 You&apos;re on the list.
               </h3>
               <p className="text-dc-text-muted">
-                We&apos;ll reach out when it&apos;s your turn. Welcome to the lab.
+                We&apos;ll reach out when it&apos;s your turn. Welcome to the
+                lab.
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="glass-card p-6 sm:p-8">
+            <form
+              onSubmit={handleSubmit}
+              className="glass-card p-6 sm:p-8 relative"
+              style={{ transform: "translateZ(20px)" }}
+            >
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1 relative">
                   <input
@@ -140,19 +221,13 @@ export default function WaitlistForm() {
               )}
             </form>
           )}
-        </motion.div>
+        </div>
 
         {/* Social proof */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true, margin: "-40px" }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-6 flex items-center justify-center gap-2 text-dc-text-muted text-sm"
-        >
+        <div className="mt-6 flex items-center justify-center gap-2 text-dc-text-muted text-sm">
           <Users className="w-4 h-4" />
           <span>Join 2,000+ biohackers waiting for DoseCraft</span>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

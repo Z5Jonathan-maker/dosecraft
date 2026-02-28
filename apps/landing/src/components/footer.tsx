@@ -46,8 +46,8 @@ export default function Footer() {
               </span>
             </a>
             <p className="text-sm text-dc-text-muted leading-relaxed max-w-xs">
-              The peptide protocol lab for serious lifters, hybrid athletes, and biohackers.
-              Track every pin, dose, and result.
+              The peptide protocol lab for serious lifters, hybrid athletes, and
+              biohackers. Track every pin, dose, and result.
             </p>
 
             {/* Social */}
@@ -98,9 +98,10 @@ export default function Footer() {
               &copy; {new Date().getFullYear()} DoseCraft. All rights reserved.
             </p>
             <p className="text-xs text-dc-text-muted/60 max-w-lg text-center md:text-right leading-relaxed">
-              <strong className="text-dc-text-muted/80">Disclaimer:</strong> DoseCraft is for educational
-              and research purposes only. Nothing on this platform constitutes medical advice.
-              Consult a licensed healthcare provider before using any peptide or compound.
+              <strong className="text-dc-text-muted/80">Disclaimer:</strong>{" "}
+              DoseCraft is for educational and research purposes only. Nothing on
+              this platform constitutes medical advice. Consult a licensed
+              healthcare provider before using any peptide or compound.
             </p>
           </div>
         </div>

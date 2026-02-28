@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X, Beaker } from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import clsx from "clsx";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const NAV_LINKS = [
   { label: "Problem", href: "#problem" },
@@ -14,20 +18,47 @@ const NAV_LINKS = [
 ];
 
 export default function Nav() {
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    if (!navRef.current) return;
+
+    /* Scroll-based background transition with GSAP */
+    if (!prefersReduced) {
+      ScrollTrigger.create({
+        trigger: document.body,
+        start: "40px top",
+        onEnter: () => setScrolled(true),
+        onLeaveBack: () => setScrolled(false),
+      });
+
+      /* Initial reveal */
+      gsap.fromTo(
+        navRef.current,
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" }
+      );
+    }
+
+    return () => {
+      ScrollTrigger.getAll()
+        .filter(
+          (st) =>
+            st.trigger === document.body && st.vars.start === "40px top"
+        )
+        .forEach((st) => st.kill());
+    };
   }, []);
 
   return (
-    <motion.nav
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
+    <nav
+      ref={navRef}
       className={clsx(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         scrolled
@@ -78,7 +109,11 @@ export default function Nav() {
             className="md:hidden p-2 text-dc-text-muted hover:text-dc-text transition-colors"
             aria-label="Toggle menu"
           >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {mobileOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
           </button>
         </div>
       </div>
@@ -117,6 +152,6 @@ export default function Nav() {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.nav>
+    </nav>
   );
 }
