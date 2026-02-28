@@ -1,0 +1,47 @@
+export { PrismaClient } from "@prisma/client";
+export type {
+  // Enums
+  Role,
+  AuthProvider,
+  Sex,
+  RiskAppetite,
+  PeptideCategory,
+  PeptideRoute,
+  PeptideStatus,
+  EvidenceLevel,
+  Severity,
+  SourceLane,
+  InteractionType,
+  ProtocolIntensity,
+  AuthorType,
+  LanePreference,
+  TimeOfDay,
+  ProtocolStatus,
+  InjectionSite,
+  MetricType,
+  ProtocolEventType,
+  SubscriptionTier,
+  SubscriptionStatus,
+
+  // Models
+  User,
+  UserProfile,
+  Peptide,
+  PeptideClinicalLane,
+  PeptideExpertLane,
+  PeptideExperimentalLane,
+  Contraindication,
+  PeptideInteraction,
+  Creator,
+  ProtocolTemplate,
+  ProtocolStep,
+  UserProtocol,
+  UserProtocolPeptide,
+  DoseLog,
+  OutcomeMetric,
+  ProtocolEvent,
+  Subscription,
+
+  // Prisma namespace types
+  Prisma,
+} from "@prisma/client";

@@ -1,0 +1,228 @@
+@import "tailwindcss";
+
+@theme {
+  --color-dc-bg: #050508;
+  --color-dc-surface: #0a0a10;
+  --color-dc-surface-2: #111118;
+  --color-dc-surface-3: #1a1a24;
+  --color-dc-border: #1e1e2e;
+  --color-dc-border-light: #2a2a3e;
+  --color-dc-text: #e8e8f0;
+  --color-dc-text-muted: #8888a0;
+  --color-dc-orange: #ff6b35;
+  --color-dc-orange-glow: #ff6b3540;
+  --color-dc-green: #00ff88;
+  --color-dc-green-glow: #00ff8830;
+  --color-dc-cyan: #00d4ff;
+  --color-dc-cyan-glow: #00d4ff30;
+  --color-dc-purple: #b366ff;
+  --color-dc-purple-glow: #b366ff30;
+}
+
+/* ---- Base ---- */
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+body {
+  background-color: #050508;
+  color: #e8e8f0;
+  font-feature-settings: "rlig" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: #ff6b3560;
+  color: #fff;
+}
+
+/* ---- Grid background ---- */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.bg-grid-fine {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ---- Gradient text ---- */
+.text-gradient-hero {
+  background: linear-gradient(135deg, #ff6b35 0%, #ff9966 40%, #ffcc80 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-green {
+  background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-purple {
+  background: linear-gradient(135deg, #b366ff 0%, #ff6b35 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ---- Hero background ---- */
+.hero-gradient {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, #ff6b3512 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 70% 10%, #b366ff08 0%, transparent 50%),
+    radial-gradient(ellipse 50% 50% at 30% 20%, #00d4ff06 0%, transparent 50%),
+    #050508;
+}
+
+/* ---- Glow effects ---- */
+.glow-orange {
+  box-shadow: 0 0 40px 0 #ff6b3520, 0 0 80px 0 #ff6b3510, inset 0 1px 0 0 #ff6b3515;
+}
+
+.glow-green {
+  box-shadow: 0 0 40px 0 #00ff8818, 0 0 80px 0 #00ff8808, inset 0 1px 0 0 #00ff8812;
+}
+
+.glow-cyan {
+  box-shadow: 0 0 40px 0 #00d4ff18, 0 0 80px 0 #00d4ff08, inset 0 1px 0 0 #00d4ff12;
+}
+
+.glow-purple {
+  box-shadow: 0 0 40px 0 #b366ff18, 0 0 80px 0 #b366ff08, inset 0 1px 0 0 #b366ff12;
+}
+
+/* ---- Glass card ---- */
+.glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+}
+
+.glass-card-hover {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card-hover:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+/* ---- Animated gradient border ---- */
+.gradient-border {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ff6b3530, #b366ff20, #00d4ff20);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+}
+
+/* ---- Button styles ---- */
+.btn-primary {
+  background: linear-gradient(135deg, #ff6b35, #ff8855);
+  color: #fff;
+  font-weight: 600;
+  padding: 12px 28px;
+  border-radius: 12px;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 20px #ff6b3540;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #ff7b45, #ff9966);
+  box-shadow: 0 6px 30px #ff6b3560;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #e8e8f0;
+  font-weight: 500;
+  padding: 12px 28px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.25s ease;
+}
+
+.btn-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ---- Pulse keyframe ---- */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* ---- Floating keyframe ---- */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* ---- Scroll indicator ---- */
+@keyframes scroll-hint {
+  0% { opacity: 0; transform: translateY(-4px); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(8px); }
+}
+
+.animate-scroll-hint {
+  animation: scroll-hint 2s ease-in-out infinite;
+}
+
+/* ---- Section divider gradient ---- */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #ff6b3530 50%, transparent 100%);
+}
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050508;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2a3e;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3a50;
+}

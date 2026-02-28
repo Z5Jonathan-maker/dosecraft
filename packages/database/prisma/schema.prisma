@@ -1,0 +1,502 @@
+// ============================================================================
+// DoseCraft — Prisma Schema
+// PostgreSQL + pgvector
+// ============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum Role {
+  USER
+  COACH
+  ADMIN
+}
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  APPLE
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum RiskAppetite {
+  CLINICAL
+  MIXED
+  EXPERIMENTAL
+}
+
+enum PeptideCategory {
+  METABOLIC
+  COSMETIC
+  NEURO
+  HEALING
+  HORMONE_SUPPORT
+  GROWTH_HORMONE
+  IMMUNE
+  OTHER
+}
+
+enum PeptideRoute {
+  SUBQ
+  IM
+  ORAL
+  TRANSDERMAL
+  NASAL
+}
+
+enum PeptideStatus {
+  RESEARCH_ONLY
+  APPROVED_DRUG
+  BANNED_SPORT
+  OTHER
+}
+
+enum EvidenceLevel {
+  META_ANALYSIS
+  RCT
+  OBSERVATIONAL
+  CASE_REPORT
+  PRECLINICAL
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum SourceLane {
+  CLINICAL
+  EXPERT
+  EXPERIMENTAL
+}
+
+enum InteractionType {
+  SYNERGY
+  CAUTION
+  AVOID
+}
+
+enum ProtocolIntensity {
+  CONSERVATIVE
+  STANDARD
+  AGGRESSIVE
+}
+
+enum AuthorType {
+  SYSTEM
+  CREATOR
+}
+
+enum LanePreference {
+  CLINICAL
+  EXPERT
+  EXPERIMENTAL
+  AUTO
+}
+
+enum TimeOfDay {
+  AM
+  PM
+  PRE_WORKOUT
+  POST_WORKOUT
+  BEDTIME
+}
+
+enum ProtocolStatus {
+  PLANNED
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum InjectionSite {
+  ABDOMEN
+  OUTER_THIGH
+  LOVE_HANDLES
+  UPPER_ARM
+  GLUTE
+  DELT
+}
+
+enum MetricType {
+  WEIGHT
+  WAIST
+  BODYFAT
+  MOOD
+  LIBIDO
+  SLEEP_SCORE
+  SKIN_QUALITY
+  HAIR_DENSITY
+  ENERGY
+  STRENGTH
+  RECOVERY
+  CUSTOM
+}
+
+enum ProtocolEventType {
+  DOSE_CHANGE
+  SIDE_EFFECT
+  PAUSE
+  RESUME
+  NOTE
+  CYCLE_START
+  CYCLE_END
+}
+
+enum SubscriptionTier {
+  FREE
+  BASE
+  PRO
+  LIFETIME
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  TRIALING
+}
+
+// ============================================================================
+// USER & PROFILE
+// ============================================================================
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String?
+  role         Role     @default(USER)
+  provider     AuthProvider @default(EMAIL)
+  providerId   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  profile        UserProfile?
+  creator        Creator?
+  protocols      UserProtocol[]
+  outcomeMetrics OutcomeMetric[]
+  subscription   Subscription?
+
+  @@index([email])
+  @@map("users")
+}
+
+model UserProfile {
+  userId        String       @id @unique @db.Uuid
+  age           Int?
+  sex           Sex?
+  heightCm      Float?
+  weightKg      Float?
+  trainingStyle String?
+  riskAppetite  RiskAppetite @default(MIXED)
+  goals         String[]
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+// ============================================================================
+// PEPTIDE KNOWLEDGE BASE
+// ============================================================================
+
+model Peptide {
+  id                 String          @id @default(uuid()) @db.Uuid
+  slug               String          @unique
+  name               String
+  category           PeptideCategory
+  route              PeptideRoute
+  status             PeptideStatus   @default(RESEARCH_ONLY)
+  description        String?
+  halfLife           String?
+  storageNotes       String?
+  reconstitutionNotes String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  clinicalLanes      PeptideClinicalLane[]
+  expertLanes        PeptideExpertLane[]
+  experimentalLanes  PeptideExperimentalLane[]
+  contraindications  Contraindication[]
+  interactionsAsA    PeptideInteraction[] @relation("PeptideA")
+  interactionsAsB    PeptideInteraction[] @relation("PeptideB")
+  protocolSteps      ProtocolStep[]
+  userProtocolPeptides UserProtocolPeptide[]
+
+  @@index([slug])
+  @@index([category])
+  @@map("peptides")
+}
+
+model PeptideClinicalLane {
+  id            String        @id @default(uuid()) @db.Uuid
+  peptideId     String        @db.Uuid
+  indication    String
+  doseMin       Float
+  doseMax       Float
+  unit          String
+  frequency     String
+  cycleWeeks    Int?
+  cyclePattern  String?
+  evidenceLevel EvidenceLevel
+  sources       String[]
+  notes         String?
+
+  peptide Peptide @relation(fields: [peptideId], references: [id], onDelete: Cascade)
+
+  @@map("peptide_clinical_lanes")
+}
+
+model PeptideExpertLane {
+  id           String   @id @default(uuid()) @db.Uuid
+  peptideId    String   @db.Uuid
+  description  String
+  commonStacks String[]
+  dosePattern  Json
+  sourceTags   String[]
+  notes        String?
+
+  peptide Peptide @relation(fields: [peptideId], references: [id], onDelete: Cascade)
+
+  @@map("peptide_expert_lanes")
+}
+
+model PeptideExperimentalLane {
+  id          String   @id @default(uuid()) @db.Uuid
+  peptideId   String   @db.Uuid
+  description String
+  dosePattern Json
+  riskNotes   String?
+  confidence  Float    @default(0.5)
+  sourceTags  String[]
+  notes       String?
+
+  peptide Peptide @relation(fields: [peptideId], references: [id], onDelete: Cascade)
+
+  @@map("peptide_experimental_lanes")
+}
+
+model Contraindication {
+  id         String     @id @default(uuid()) @db.Uuid
+  peptideId  String     @db.Uuid
+  condition  String
+  severity   Severity
+  sourceLane SourceLane
+  notes      String?
+
+  peptide Peptide @relation(fields: [peptideId], references: [id], onDelete: Cascade)
+
+  @@map("contraindications")
+}
+
+model PeptideInteraction {
+  id         String          @id @default(uuid()) @db.Uuid
+  peptideAId String          @db.Uuid
+  peptideBId String          @db.Uuid
+  type       InteractionType
+  notes      String?
+
+  peptideA Peptide @relation("PeptideA", fields: [peptideAId], references: [id], onDelete: Cascade)
+  peptideB Peptide @relation("PeptideB", fields: [peptideBId], references: [id], onDelete: Cascade)
+
+  @@unique([peptideAId, peptideBId])
+  @@map("peptide_interactions")
+}
+
+// ============================================================================
+// PROTOCOL TEMPLATES & CREATORS
+// ============================================================================
+
+model Creator {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @unique @db.Uuid
+  displayName  String
+  socialHandle String?
+  bio          String?
+  avatarUrl    String?
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templates ProtocolTemplate[]
+
+  @@map("creators")
+}
+
+model ProtocolTemplate {
+  id           String            @id @default(uuid()) @db.Uuid
+  slug         String            @unique
+  name         String
+  hookTitle    String?
+  goalTags     String[]
+  intensity    ProtocolIntensity @default(STANDARD)
+  description  String?
+  contentAngle String?
+  authorType   AuthorType        @default(SYSTEM)
+  creatorId    String?           @db.Uuid
+  isPublic     Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  creator       Creator?        @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  steps         ProtocolStep[]
+  userProtocols UserProtocol[]
+
+  @@index([slug])
+  @@index([goalTags], type: Gin)
+  @@map("protocol_templates")
+}
+
+model ProtocolStep {
+  id             String         @id @default(uuid()) @db.Uuid
+  templateId     String         @db.Uuid
+  peptideId      String         @db.Uuid
+  lanePreference LanePreference @default(AUTO)
+  dose           Float
+  unit           String
+  frequency      String
+  timeOfDay      TimeOfDay      @default(AM)
+  startWeek      Int
+  endWeek        Int
+  notes          String?
+
+  template ProtocolTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  peptide  Peptide          @relation(fields: [peptideId], references: [id], onDelete: Cascade)
+
+  @@map("protocol_steps")
+}
+
+// ============================================================================
+// USER PROTOCOLS & LOGGING
+// ============================================================================
+
+model UserProtocol {
+  id         String         @id @default(uuid()) @db.Uuid
+  userId     String         @db.Uuid
+  templateId String?        @db.Uuid
+  name       String
+  startDate  DateTime
+  endDate    DateTime?
+  status     ProtocolStatus @default(PLANNED)
+  notes      String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template ProtocolTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  peptides UserProtocolPeptide[]
+  events   ProtocolEvent[]
+
+  @@index([userId, status])
+  @@map("user_protocols")
+}
+
+model UserProtocolPeptide {
+  id              String     @id @default(uuid()) @db.Uuid
+  userProtocolId  String     @db.Uuid
+  peptideId       String     @db.Uuid
+  dose            Float
+  unit            String
+  frequency       String
+  timeOfDay       TimeOfDay  @default(AM)
+  laneUsed        SourceLane
+
+  userProtocol UserProtocol @relation(fields: [userProtocolId], references: [id], onDelete: Cascade)
+  peptide      Peptide      @relation(fields: [peptideId], references: [id], onDelete: Cascade)
+  doseLogs     DoseLog[]
+
+  @@map("user_protocol_peptides")
+}
+
+model DoseLog {
+  id                    String        @id @default(uuid()) @db.Uuid
+  userProtocolPeptideId String        @db.Uuid
+  takenAt               DateTime
+  site                  InjectionSite?
+  notes                 String?
+
+  userProtocolPeptide UserProtocolPeptide @relation(fields: [userProtocolPeptideId], references: [id], onDelete: Cascade)
+
+  @@index([takenAt])
+  @@map("dose_logs")
+}
+
+model OutcomeMetric {
+  id          String     @id @default(uuid()) @db.Uuid
+  userId      String     @db.Uuid
+  type        MetricType
+  valueNumber Float?
+  valueText   String?
+  recordedAt  DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, recordedAt])
+  @@map("outcome_metrics")
+}
+
+model ProtocolEvent {
+  id              String            @id @default(uuid()) @db.Uuid
+  userProtocolId  String            @db.Uuid
+  type            ProtocolEventType
+  payload         Json
+  createdAt       DateTime          @default(now())
+
+  userProtocol UserProtocol @relation(fields: [userProtocolId], references: [id], onDelete: Cascade)
+
+  @@map("protocol_events")
+}
+
+// ============================================================================
+// BILLING & SUBSCRIPTIONS
+// ============================================================================
+
+model Subscription {
+  id                   String             @id @default(uuid()) @db.Uuid
+  userId               String             @unique @db.Uuid
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  tier                 SubscriptionTier   @default(FREE)
+  status               SubscriptionStatus @default(ACTIVE)
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// ============================================================================
+// VECTOR STORAGE (RAG)
+// ============================================================================
+
+model Embedding {
+  id         String                      @id @default(uuid()) @db.Uuid
+  sourceType String
+  sourceId   String
+  content    String
+  embedding  Unsupported("vector(1536)")
+  metadata   Json?
+  createdAt  DateTime                    @default(now())
+
+  @@map("embeddings")
+}

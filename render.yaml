@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: dosecraft-api
+    runtime: node
+    region: ohio
+    plan: starter
+    buildCommand: |
+      npm ci
+      npx prisma generate --schema=packages/database/prisma/schema.prisma
+      npm run build --workspace=@dosecraft/api
+    startCommand: node apps/api/dist/main.js
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: FRONTEND_URL
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+    healthCheckPath: /api/health
+    autoDeploy: true
