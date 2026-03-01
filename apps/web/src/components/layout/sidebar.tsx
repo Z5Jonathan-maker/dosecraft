@@ -7,6 +7,7 @@ import clsx from "clsx";
 import {
   LayoutDashboard,
   BookOpen,
+  Beaker,
   Layers,
   ClipboardCheck,
   Heart,
@@ -21,16 +22,19 @@ import {
   Star,
   ShoppingBag,
   ShieldCheck,
+  MapPin,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth";
 
 const NAV_ITEMS = [
   { label: "Dashboard",  href: "/",           icon: LayoutDashboard, color: "#ff6b35" },
   { label: "Library",    href: "/library",     icon: BookOpen,        color: "#00d4ff" },
+  { label: "Blends",    href: "/blends",      icon: Beaker,          color: "#b366ff" },
   { label: "Protocols",  href: "/protocols",   icon: Layers,          color: "#ff6b35" },
   { label: "Log",        href: "/log",          icon: ClipboardCheck,  color: "#00ff88" },
   { label: "Wellness",  href: "/wellness",    icon: Heart,           color: "#ff6b35" },
   { label: "Inventory",  href: "/inventory",   icon: Package,         color: "#ffaa00" },
+  { label: "Rotation",   href: "/injection-sites", icon: MapPin,    color: "#ff4444" },
   { label: "Insights",   href: "/insights",    icon: BarChart3,       color: "#b366ff" },
   { label: "Calculator", href: "/calculator",  icon: Calculator,      color: "#ffaa00" },
   { label: "Tools",      href: "/tools",       icon: Wrench,          color: "#00d4ff" },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, ClipboardCheck, Plus, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, ClipboardCheck, Plus, MapPin, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DoseChecklist } from "@/components/tracking/dose-checklist";
@@ -25,17 +25,21 @@ const PEPTIDE_OPTIONS = MOCK_PEPTIDES.map((p) => p.name);
 
 const UNIT_OPTIONS = ["mcg", "mg", "IU", "mL"] as const;
 
+interface CompoundEntry {
+  readonly peptide: string;
+  readonly dose: string;
+  readonly unit: "mcg" | "mg" | "IU" | "mL";
+}
+
 export default function LogPage() {
   const today = new Date();
   const todayStr = today.toLocaleDateString("en-US", { weekday: "short" });
   const [selectedSite, setSelectedSite] = useState<string | null>(null);
-  const [quickLog, setQuickLog] = useState({
-    peptide: "",
-    dose: "",
-    unit: "mcg" as typeof UNIT_OPTIONS[number],
-    site: "",
-    notes: "",
-  });
+  const [compounds, setCompounds] = useState<readonly CompoundEntry[]>([
+    { peptide: "", dose: "", unit: "mcg" },
+  ]);
+  const [site, setSite] = useState("");
+  const [notes, setNotes] = useState("");
   const [logSuccess, setLogSuccess] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
 
@@ -45,10 +49,32 @@ export default function LogPage() {
   weekEnd.setDate(weekEnd.getDate() + 6);
   const weekLabel = `${weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 
+  const addCompound = () => {
+    if (compounds.length < 5) {
+      setCompounds([...compounds, { peptide: "", dose: "", unit: "mcg" }]);
+    }
+  };
+
+  const removeCompound = (index: number) => {
+    setCompounds(compounds.filter((_, i) => i !== index));
+  };
+
+  const updateCompound = (index: number, field: keyof CompoundEntry, value: string) => {
+    setCompounds(compounds.map((c, i) => i === index ? { ...c, [field]: value } : c));
+  };
+
+  const handleCompoundSelect = (index: number, name: string) => {
+    const compound = MOCK_PEPTIDES.find((p) => p.name === name);
+    const unit = compound?.category === "hormonal" ? "mg" : "mcg";
+    setCompounds(compounds.map((c, i) => i === index ? { ...c, peptide: name, unit } : c));
+  };
+
   const handleQuickLog = (e: React.FormEvent) => {
     e.preventDefault();
     setLogSuccess(true);
-    setQuickLog({ peptide: "", dose: "", unit: "mcg", site: "", notes: "" });
+    setCompounds([{ peptide: "", dose: "", unit: "mcg" }]);
+    setSite("");
+    setNotes("");
     setSelectedSite(null);
     setTimeout(() => setLogSuccess(false), 3000);
   };
@@ -177,48 +203,67 @@ export default function LogPage() {
             )}
 
             <form onSubmit={handleQuickLog} className="space-y-3">
-              {/* Peptide */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-dc-text-muted uppercase tracking-wide">Compound</label>
-                <select
-                  value={quickLog.peptide}
-                  onChange={(e) => {
-                    const name = e.target.value;
-                    const compound = MOCK_PEPTIDES.find((p) => p.name === name);
-                    const unit = compound?.category === "hormonal" ? "mg" : "mcg";
-                    setQuickLog({ ...quickLog, peptide: name, unit });
-                  }}
-                  required
-                  className="w-full px-3 py-2.5 rounded-xl text-sm text-dc-text bg-dc-surface border border-dc-border focus:outline-none focus:border-dc-accent focus:ring-2 focus:ring-dc-accent/15 transition-all"
-                >
-                  <option value="">Select compound...</option>
-                  {PEPTIDE_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-                </select>
-              </div>
+              {/* Multi-compound badge */}
+              {compounds.length > 1 && (
+                <Badge className="bg-dc-accent/15 text-dc-accent border-dc-accent/30 text-xs">
+                  Multi-dose: {compounds.length} compounds
+                </Badge>
+              )}
 
-              {/* Dose + Unit */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-dc-text-muted uppercase tracking-wide">Dose</label>
-                  <input
-                    type="number"
-                    value={quickLog.dose}
-                    onChange={(e) => setQuickLog({ ...quickLog, dose: e.target.value })}
-                    required
-                    placeholder="250"
-                    className="w-full px-3 py-2.5 rounded-xl text-sm text-dc-text bg-dc-surface border border-dc-border placeholder:text-dc-text-muted/40 focus:outline-none focus:border-dc-accent focus:ring-2 focus:ring-dc-accent/15 transition-all"
-                  />
+              {/* Compound rows */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-dc-text-muted uppercase tracking-wide">Compounds</label>
+                <div className="space-y-2">
+                  {compounds.map((entry, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5 p-2 rounded-xl bg-dc-surface border border-dc-border">
+                      <select
+                        value={entry.peptide}
+                        onChange={(e) => handleCompoundSelect(idx, e.target.value)}
+                        required
+                        className="flex-1 min-w-0 px-2 py-2 rounded-lg text-xs text-dc-text bg-dc-bg border border-dc-border focus:outline-none focus:border-dc-accent focus:ring-2 focus:ring-dc-accent/15 transition-all"
+                      >
+                        <option value="">Compound...</option>
+                        {PEPTIDE_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                      <input
+                        type="number"
+                        value={entry.dose}
+                        onChange={(e) => updateCompound(idx, "dose", e.target.value)}
+                        required
+                        placeholder="250"
+                        className="w-16 px-2 py-2 rounded-lg text-xs text-dc-text bg-dc-bg border border-dc-border placeholder:text-dc-text-muted/40 focus:outline-none focus:border-dc-accent focus:ring-2 focus:ring-dc-accent/15 transition-all"
+                      />
+                      <select
+                        value={entry.unit}
+                        onChange={(e) => updateCompound(idx, "unit", e.target.value)}
+                        className="w-16 px-1.5 py-2 rounded-lg text-xs text-dc-text bg-dc-bg border border-dc-border focus:outline-none focus:border-dc-accent transition-all"
+                      >
+                        {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+                      </select>
+                      {compounds.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeCompound(idx)}
+                          className="p-1.5 rounded-lg text-dc-text-muted hover:text-red-400 hover:bg-red-400/10 transition-all"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-dc-text-muted uppercase tracking-wide">Unit</label>
-                  <select
-                    value={quickLog.unit}
-                    onChange={(e) => setQuickLog({ ...quickLog, unit: e.target.value as typeof UNIT_OPTIONS[number] })}
-                    className="w-full px-3 py-2.5 rounded-xl text-sm text-dc-text bg-dc-surface border border-dc-border focus:outline-none focus:border-dc-accent transition-all"
+
+                {/* Add compound button */}
+                {compounds.length < 5 && (
+                  <button
+                    type="button"
+                    onClick={addCompound}
+                    className="w-full py-2 rounded-xl border-2 border-dashed border-dc-border text-dc-text-muted hover:border-dc-accent/40 hover:text-dc-accent text-xs font-medium flex items-center justify-center gap-1.5 transition-all"
                   >
-                    {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
-                  </select>
-                </div>
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Compound
+                  </button>
+                )}
               </div>
 
               {/* Injection Site */}
@@ -228,19 +273,19 @@ export default function LogPage() {
                   Injection Site
                 </label>
                 <div className="grid grid-cols-2 gap-1.5">
-                  {INJECTION_SITES.map((site) => (
+                  {INJECTION_SITES.map((s) => (
                     <button
-                      key={site.id}
+                      key={s.id}
                       type="button"
-                      onClick={() => { setSelectedSite(site.id); setQuickLog({ ...quickLog, site: site.label }); }}
+                      onClick={() => { setSelectedSite(s.id); setSite(s.label); }}
                       className={clsx(
                         "px-2.5 py-2 rounded-lg border text-[10px] font-medium text-left transition-all",
-                        selectedSite === site.id
+                        selectedSite === s.id
                           ? "bg-dc-accent/10 border-dc-accent/30 text-dc-accent"
                           : "border-dc-border text-dc-text-muted hover:border-dc-accent/20 hover:text-dc-text",
                       )}
                     >
-                      {site.label}
+                      {s.label}
                     </button>
                   ))}
                 </div>
@@ -250,8 +295,8 @@ export default function LogPage() {
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-dc-text-muted uppercase tracking-wide">Notes (optional)</label>
                 <textarea
-                  value={quickLog.notes}
-                  onChange={(e) => setQuickLog({ ...quickLog, notes: e.target.value })}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
                   placeholder="Any observations..."
                   rows={2}
                   className="w-full px-3 py-2.5 rounded-xl text-sm text-dc-text bg-dc-surface border border-dc-border placeholder:text-dc-text-muted/40 focus:outline-none focus:border-dc-accent focus:ring-2 focus:ring-dc-accent/15 transition-all resize-none"
@@ -264,7 +309,7 @@ export default function LogPage() {
                 style={{ background: "linear-gradient(135deg, #00ff88 0%, #00cc66 100%)", boxShadow: "0 4px 16px rgba(0,255,136,0.2)" }}
               >
                 <ClipboardCheck className="w-4 h-4" />
-                Log Dose
+                Log Dose{compounds.length > 1 ? ` (${compounds.length} compounds)` : ""}
               </button>
             </form>
           </Card>
@@ -278,9 +323,9 @@ export default function LogPage() {
             <BodyDiagram
               sites={INJECTION_SITES}
               selectedSiteId={selectedSite}
-              onSelectSite={(site) => {
-                setSelectedSite(site.id);
-                setQuickLog((q) => ({ ...q, site: site.label }));
+              onSelectSite={(s) => {
+                setSelectedSite(s.id);
+                setSite(s.label);
               }}
             />
           </Card>

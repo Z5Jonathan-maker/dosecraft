@@ -260,3 +260,24 @@ export interface InjectionSite {
   readonly depth?: string;
   readonly notes?: string;
 }
+
+// ── Peptide Blends ──
+export interface PeptideBlend {
+  readonly id: string;
+  readonly name: string;
+  readonly slug: string;
+  readonly components: readonly BlendComponent[];
+  readonly category: string;
+  readonly description: string;
+  readonly typicalDose: string;
+  readonly frequency: string;
+  readonly popularity: number;
+  readonly availability: "widely-available" | "limited" | "custom-order";
+  readonly estimatedMonthlyCost: string;
+}
+
+export interface BlendComponent {
+  readonly peptideSlug: string;
+  readonly peptideName: string;
+  readonly ratio: string;
+}
