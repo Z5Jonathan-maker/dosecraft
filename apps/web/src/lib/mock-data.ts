@@ -3317,16 +3317,22 @@ export const PROTOCOL_GOALS = [
 // ── Injection Sites ────────────────────────────────────────────────────────────
 
 export const INJECTION_SITES: readonly InjectionSite[] = [
-  { id: "abd-left",    label: "Abdomen (Left)",     x: 42, y: 52 },
-  { id: "abd-right",   label: "Abdomen (Right)",    x: 58, y: 52 },
-  { id: "thigh-left",  label: "Outer Thigh (Left)", x: 36, y: 70 },
-  { id: "thigh-right", label: "Outer Thigh (Right)",x: 64, y: 70 },
-  { id: "arm-left",    label: "Upper Arm (Left)",   x: 22, y: 37 },
-  { id: "arm-right",   label: "Upper Arm (Right)",  x: 78, y: 37 },
-  { id: "glute-left",  label: "Glute (Left)",       x: 40, y: 62 },
-  { id: "glute-right", label: "Glute (Right)",      x: 60, y: 62 },
-  { id: "delt-left",   label: "Delt (Left)",        x: 24, y: 33 },
-  { id: "delt-right",  label: "Delt (Right)",       x: 76, y: 33 },
-  { id: "quad-left",   label: "Quad (Left)",        x: 40, y: 75 },
-  { id: "quad-right",  label: "Quad (Right)",       x: 60, y: 75 },
+  // ── Front View — SubQ Sites ──
+  { id: "abd-left",       label: "Abdomen (Left)",        x: 43, y: 52, view: "front", type: "subq", muscle: "Subcutaneous fat", depth: "½ inch, 45°", notes: "Most common SubQ site — pinch and inject" },
+  { id: "abd-right",      label: "Abdomen (Right)",       x: 57, y: 52, view: "front", type: "subq", muscle: "Subcutaneous fat", depth: "½ inch, 45°", notes: "Rotate 2 inches from navel" },
+  { id: "love-handle-l",  label: "Love Handle (Left)",    x: 35, y: 50, view: "front", type: "subq", muscle: "Subcutaneous fat", depth: "½ inch, 45°", notes: "Lateral abdomen — good fat pad" },
+  { id: "love-handle-r",  label: "Love Handle (Right)",   x: 65, y: 50, view: "front", type: "subq", muscle: "Subcutaneous fat", depth: "½ inch, 45°", notes: "Lateral abdomen — good fat pad" },
+  // ── Front View — IM Sites ──
+  { id: "delt-left",      label: "Delt (Left)",           x: 26, y: 33, view: "front", type: "im", muscle: "Deltoid", depth: "1 inch, 90°", notes: "2-3 finger widths below acromion" },
+  { id: "delt-right",     label: "Delt (Right)",          x: 74, y: 33, view: "front", type: "im", muscle: "Deltoid", depth: "1 inch, 90°", notes: "2-3 finger widths below acromion" },
+  { id: "quad-left",      label: "Vastus Lateralis (L)",  x: 42, y: 72, view: "front", type: "im", muscle: "Vastus Lateralis", depth: "1-1.5 inch, 90°", notes: "Outer middle third of thigh" },
+  { id: "quad-right",     label: "Vastus Lateralis (R)",  x: 58, y: 72, view: "front", type: "im", muscle: "Vastus Lateralis", depth: "1-1.5 inch, 90°", notes: "Outer middle third of thigh" },
+  // ── Back View — IM Sites ──
+  { id: "glute-left",     label: "Ventrogluteal (Left)",  x: 35, y: 55, view: "back", type: "im", muscle: "Gluteus Medius", depth: "1.5 inch, 90°", notes: "Preferred IM site — safest, least painful" },
+  { id: "glute-right",    label: "Ventrogluteal (Right)", x: 65, y: 55, view: "back", type: "im", muscle: "Gluteus Medius", depth: "1.5 inch, 90°", notes: "Preferred IM site — safest, least painful" },
+  { id: "dorso-left",     label: "Dorsogluteal (Left)",   x: 40, y: 58, view: "back", type: "im", muscle: "Gluteus Maximus", depth: "1.5 inch, 90°", notes: "Upper outer quadrant only — avoid sciatic nerve" },
+  { id: "dorso-right",    label: "Dorsogluteal (Right)",  x: 60, y: 58, view: "back", type: "im", muscle: "Gluteus Maximus", depth: "1.5 inch, 90°", notes: "Upper outer quadrant only — avoid sciatic nerve" },
+  // ── Back View — SubQ Sites ──
+  { id: "upper-back-l",   label: "Upper Back (Left)",     x: 38, y: 35, view: "back", type: "subq", muscle: "Subcutaneous fat", depth: "½ inch, 45°", notes: "Below scapula — less common site" },
+  { id: "upper-back-r",   label: "Upper Back (Right)",    x: 62, y: 35, view: "back", type: "subq", muscle: "Subcutaneous fat", depth: "½ inch, 45°", notes: "Below scapula — less common site" },
 ] as const;

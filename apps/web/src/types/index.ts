@@ -183,9 +183,17 @@ export interface NavItem {
 }
 
 // ── Injection Site ──
+export type InjectionType = "subq" | "im";
+export type BodyView = "front" | "back";
+
 export interface InjectionSite {
   readonly id: string;
   readonly label: string;
   readonly x: number;
   readonly y: number;
+  readonly view: BodyView;
+  readonly type: InjectionType;
+  readonly muscle?: string;
+  readonly depth?: string;
+  readonly notes?: string;
 }

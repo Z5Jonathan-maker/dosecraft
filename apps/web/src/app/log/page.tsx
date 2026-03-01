@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, ClipboardCheck, Plus, MapPin, Syringe, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, ClipboardCheck, Plus, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DoseChecklist } from "@/components/tracking/dose-checklist";
+import { BodyDiagram } from "@/components/tracking/body-diagram";
 import { MOCK_DAILY_DOSES, MOCK_OUTCOMES, INJECTION_SITES, MOCK_PEPTIDES } from "@/lib/mock-data";
 import clsx from "clsx";
 
@@ -274,51 +275,14 @@ export default function LogPage() {
               <MapPin className="w-4.5 h-4.5 text-dc-warning" />
               <CardTitle>Injection Site Map</CardTitle>
             </div>
-
-            <div className="relative w-full aspect-[9/16] max-w-[180px] mx-auto">
-              {/* Body silhouette SVG */}
-              <svg viewBox="0 0 100 180" className="w-full h-full">
-                {/* Simple body outline */}
-                <ellipse cx="50" cy="15" rx="10" ry="12" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
-                <rect x="38" y="28" width="24" height="36" rx="4" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
-                <rect x="20" y="30" width="16" height="28" rx="4" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
-                <rect x="64" y="30" width="16" height="28" rx="4" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
-                <rect x="38" y="64" width="10" height="36" rx="4" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
-                <rect x="52" y="64" width="10" height="36" rx="4" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
-                <rect x="36" y="100" width="10" height="28" rx="4" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
-                <rect x="54" y="100" width="10" height="28" rx="4" fill="none" stroke="#2a2a3e" strokeWidth="1.5" />
-
-                {/* Injection site markers */}
-                {INJECTION_SITES.map((site) => {
-                  const isSelected = selectedSite === site.id;
-                  const x = site.x;
-                  const y = (site.y / 100) * 140 + 10;
-                  return (
-                    <g key={site.id} className="cursor-pointer" onClick={() => { setSelectedSite(site.id); setQuickLog(q => ({ ...q, site: site.label })); }}>
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r={isSelected ? 5 : 3.5}
-                        fill={isSelected ? "#ff6b35" : "#2a2a3e"}
-                        stroke={isSelected ? "#ff6b35" : "#3a3a5e"}
-                        strokeWidth="1"
-                        style={{ filter: isSelected ? "drop-shadow(0 0 6px rgba(255,107,53,0.8))" : "none" }}
-                      />
-                    </g>
-                  );
-                })}
-              </svg>
-            </div>
-
-            {selectedSite && (
-              <div className="mt-3 px-3 py-2 rounded-lg bg-dc-accent/8 border border-dc-accent/20 text-xs text-dc-accent text-center">
-                Selected: {INJECTION_SITES.find((s) => s.id === selectedSite)?.label}
-              </div>
-            )}
-
-            <p className="text-[10px] text-dc-text-muted text-center mt-2">
-              Tap a site to select it for logging
-            </p>
+            <BodyDiagram
+              sites={INJECTION_SITES}
+              selectedSiteId={selectedSite}
+              onSelectSite={(site) => {
+                setSelectedSite(site.id);
+                setQuickLog((q) => ({ ...q, site: site.label }));
+              }}
+            />
           </Card>
         </div>
       </div>
