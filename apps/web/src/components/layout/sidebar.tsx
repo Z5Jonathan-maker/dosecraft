@@ -15,6 +15,7 @@ import {
   X,
   FlaskConical,
   ChevronRight,
+  Star,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth";
 
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { label: "Log",        href: "/log",          icon: ClipboardCheck,  color: "#00ff88" },
   { label: "Insights",   href: "/insights",    icon: BarChart3,       color: "#b366ff" },
   { label: "Calculator", href: "/calculator",  icon: Calculator,      color: "#ffaa00" },
+  { label: "Creators",   href: "/creators",    icon: Star,            color: "#ff4444" },
 ] as const;
 
 export function Sidebar() {

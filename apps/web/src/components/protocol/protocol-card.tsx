@@ -27,7 +27,7 @@ const ANGLE_GLOW: Record<string, "cyan" | "accent" | "purple"> = {
 
 export function ProtocolCard({ protocol, showProgress = false }: ProtocolCardProps) {
   return (
-    <Link href={`/protocols#${protocol.id}`} className="block">
+    <Link href={`/protocols/${protocol.id}`} className="block">
       <Card
         hoverable
         glowColor={ANGLE_GLOW[protocol.contentAngle]}

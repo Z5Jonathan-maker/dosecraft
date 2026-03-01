@@ -170,7 +170,8 @@ export default function ProtocolsPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {MOCK_CREATORS.map((creator) => (
-            <Card key={creator.id} hoverable className="group">
+            <Link key={creator.id} href={`/creators/${creator.slug}`} className="block group">
+            <Card hoverable>
               <div className="flex items-start gap-4 mb-3">
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0"
@@ -201,6 +202,7 @@ export default function ProtocolsPage() {
                 </span>
               </div>
             </Card>
+            </Link>
           ))}
         </div>
       </section>
