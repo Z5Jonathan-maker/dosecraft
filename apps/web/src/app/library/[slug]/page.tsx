@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useMemo } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -12,12 +12,18 @@ import {
   Plus,
   ExternalLink,
   CheckCircle2,
+  ShoppingBag,
+  Star,
 } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs } from "@/components/ui/tabs";
 import { LaneBadge, LaneSelector, LANE_CONFIG } from "@/components/peptide/lane-badge";
-import { MOCK_PEPTIDES } from "@/lib/mock-data";
+import {
+  SingleCompoundChart,
+  parseHalfLifeToHours,
+} from "@/components/peptide/half-life-chart";
+import { MOCK_PEPTIDES, MOCK_VENDORS, MOCK_PEPTIDE_SOURCES } from "@/lib/mock-data";
 import type { EvidenceLane } from "@/types";
 import clsx from "clsx";
 
@@ -43,6 +49,74 @@ function ConfidenceBar({ value }: { value: number }) {
   );
 }
 
+function WhereToBuyCard({ slug, peptideName }: { readonly slug: string; readonly peptideName: string }) {
+  const sources = useMemo(() => {
+    return MOCK_PEPTIDE_SOURCES
+      .filter((s) => s.peptideSlug === slug && s.inStock)
+      .sort((a, b) => a.price - b.price)
+      .slice(0, 3)
+      .map((source) => {
+        const vendor = MOCK_VENDORS.find((v) => v.id === source.vendorId);
+        return { ...source, vendor };
+      });
+  }, [slug]);
+
+  if (sources.length === 0) return null;
+
+  return (
+    <Card glowColor="green">
+      <div className="flex items-center gap-2 mb-3">
+        <ShoppingBag className="w-4 h-4 text-dc-neon-green" />
+        <CardTitle>Where to Buy</CardTitle>
+      </div>
+      <div className="space-y-2.5">
+        {sources.map((source) => (
+          <div
+            key={`${source.vendorId}-${source.peptideSlug}`}
+            className="flex items-center justify-between py-2 px-3 rounded-xl bg-dc-surface-alt/40"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-medium text-dc-text truncate">
+                  {source.vendor?.name ?? "Unknown"}
+                </span>
+                <div className="flex items-center gap-0.5">
+                  <Star className="w-2.5 h-2.5" style={{ color: "#ffaa00" }} fill="#ffaa00" />
+                  <span className="text-[9px] text-dc-text-muted mono">
+                    {source.vendor?.trustScore.toFixed(1)}
+                  </span>
+                </div>
+              </div>
+              <span className="text-[10px] text-dc-text-faint">{source.vialSize}</span>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="text-sm font-bold text-dc-neon-green mono">${source.price}</span>
+              <a
+                href={source.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2.5 py-1 rounded-lg text-[10px] font-medium text-dc-text hover:text-white transition-colors flex items-center gap-1"
+                style={{ backgroundColor: "rgba(0,255,136,0.1)" }}
+              >
+                View <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Link
+        href={`/sources?peptide=${slug}`}
+        className="mt-3 flex items-center justify-center gap-1.5 text-xs text-dc-text-muted hover:text-dc-neon-green transition-colors"
+      >
+        Compare all vendors <ExternalLink className="w-3 h-3" />
+      </Link>
+      <p className="text-[9px] text-dc-text-faint mt-2 text-center leading-relaxed">
+        Affiliate links may earn DoseCraft a commission
+      </p>
+    </Card>
+  );
+}
+
 export default function PeptideDetailPage({ params }: PageProps) {
   const { slug } = use(params);
   const peptide = MOCK_PEPTIDES.find((p) => p.slug === slug);
@@ -56,6 +130,31 @@ export default function PeptideDetailPage({ params }: PageProps) {
     label: LANE_CONFIG[lane].label,
     color: LANE_CONFIG[lane].color,
   }));
+
+  // Parse half-life for the chart
+  const halfLifeHours = useMemo(
+    () => parseHalfLifeToHours(peptide.halfLife),
+    [peptide.halfLife],
+  );
+
+  // Determine the primary lane for coloring
+  const primaryLane: EvidenceLane = peptide.lanes[0] ?? "clinical";
+
+  // Compute a sensible dose interval from the frequency data
+  const doseInterval = useMemo(() => {
+    const laneData = peptide.laneData[primaryLane];
+    if (!laneData) return halfLifeHours * 1.5;
+
+    const freq = laneData.frequency.toLowerCase();
+    if (freq.includes("3x daily")) return 8;
+    if (freq.includes("2x daily") || freq.includes("am/pm")) return 12;
+    if (freq.includes("daily") || freq.includes("1x daily")) return 24;
+    if (freq.includes("2x per week") || freq.includes("2x/week")) return 84;
+    if (freq.includes("weekly") || freq.includes("1x/week")) return 168;
+
+    // Fallback: 1.5x half-life
+    return Math.max(halfLifeHours * 1.5, 4);
+  }, [peptide.laneData, primaryLane, halfLifeHours]);
 
   const statusVariant: Record<string, "success" | "warning" | "danger" | "neutral"> = {
     "well-researched": "success",
@@ -226,6 +325,24 @@ export default function PeptideDetailPage({ params }: PageProps) {
               );
             }}
           </Tabs>
+
+          {/* Half-Life Decay Curve */}
+          <Card>
+            <div className="flex items-center gap-2 mb-1">
+              <Activity className="w-4 h-4 text-dc-neon-cyan" />
+              <CardTitle>Half-Life Decay Curve</CardTitle>
+            </div>
+            <p className="text-xs text-dc-text-muted mb-4">
+              Projected plasma concentration with {peptide.name} over multiple doses, showing accumulation effect.
+            </p>
+            <SingleCompoundChart
+              name={peptide.name}
+              halfLifeHours={halfLifeHours}
+              lane={primaryLane}
+              doseCount={3}
+              intervalHours={doseInterval}
+            />
+          </Card>
         </div>
 
         {/* Sidebar */}
@@ -246,6 +363,9 @@ export default function PeptideDetailPage({ params }: PageProps) {
               </button>
             </Link>
           </Card>
+
+          {/* Where to Buy */}
+          <WhereToBuyCard slug={slug} peptideName={peptide.name} />
 
           {/* Contraindications */}
           {peptide.contraindications.length > 0 && (

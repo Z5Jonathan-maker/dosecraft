@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, LogOut, Search, ChevronDown, User } from "lucide-react";
 import { useAuthStore } from "@/stores/auth";
+import { CommandPalette } from "@/components/search/command-palette";
 import clsx from "clsx";
 
 const PAGE_TITLES: Record<string, { title: string; subtitle?: string }> = {
@@ -184,47 +185,7 @@ export function Header({ user }: HeaderProps) {
         </div>
       </div>
       {/* Search Modal (⌘K) */}
-      {searchOpen && (
-        <>
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={closeSearch} />
-          <div className="fixed top-[20%] left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4">
-            <div className="glass rounded-2xl border border-dc-border shadow-2xl overflow-hidden">
-              <div className="flex items-center gap-3 px-4 py-3.5 border-b border-dc-border">
-                <Search className="w-4.5 h-4.5 text-dc-text-muted flex-shrink-0" />
-                <input
-                  autoFocus
-                  placeholder="Search peptides, protocols, insights..."
-                  className="flex-1 bg-transparent text-sm text-dc-text placeholder:text-dc-text-muted/50 outline-none"
-                />
-                <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-dc-surface-alt border border-dc-border text-dc-text-faint flex-shrink-0">
-                  ESC
-                </kbd>
-              </div>
-              <div className="p-4 space-y-1">
-                {[
-                  { label: "Peptide Library", href: "/library" },
-                  { label: "Protocol Builder", href: "/protocols/builder" },
-                  { label: "Daily Log", href: "/log" },
-                  { label: "Insights & Analytics", href: "/insights" },
-                  { label: "Dose Calculator", href: "/calculator" },
-                ].map((item) => (
-                  <button
-                    key={item.href}
-                    onClick={() => { router.push(item.href); closeSearch(); }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-dc-text-muted hover:text-dc-text hover:bg-dc-surface-alt transition-colors text-left"
-                  >
-                    <Search className="w-3.5 h-3.5 flex-shrink-0" />
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-              <div className="px-4 py-3 border-t border-dc-border text-center">
-                <p className="text-[10px] text-dc-text-faint">Full-text search coming soon</p>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      <CommandPalette open={searchOpen} onClose={closeSearch} />
     </header>
   );
 }

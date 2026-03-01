@@ -1,6 +1,9 @@
 // ── Evidence Lane ──
 export type EvidenceLane = "clinical" | "expert" | "experimental";
 
+// ── FDA Status ──
+export type FDAStatus = "approved" | "phase-3" | "phase-2" | "phase-1" | "research-only" | "compoundable" | "otc" | "supplement" | "caution";
+
 // ── Peptide ──
 export interface Peptide {
   readonly slug: string;
@@ -9,6 +12,7 @@ export interface Peptide {
   readonly category: PeptideCategory;
   readonly route: AdministrationRoute;
   readonly status: PeptideStatus;
+  readonly fdaStatus: FDAStatus;
   readonly description: string;
   readonly halfLife: string;
   readonly typicalDoseRange: string;
@@ -180,6 +184,31 @@ export interface NavItem {
   readonly label: string;
   readonly href: string;
   readonly icon: string;
+}
+
+// ── Vendor / Source ──
+export type VendorType = "pharmacy" | "research" | "telehealth" | "supplement";
+export type PricingTier = "budget" | "mid" | "premium";
+
+export interface VendorSource {
+  readonly id: string;
+  readonly name: string;
+  readonly url: string;
+  readonly type: VendorType;
+  readonly trustScore: number; // 1-5
+  readonly pricing: PricingTier;
+  readonly shipping: string;
+  readonly notes?: string;
+  readonly affiliateTag?: string; // for future monetization
+}
+
+export interface PeptideSource {
+  readonly vendorId: string;
+  readonly peptideSlug: string;
+  readonly price: number; // USD per vial/unit
+  readonly vialSize: string; // e.g., "5mg", "10mg", "200mg/mL"
+  readonly inStock: boolean;
+  readonly url: string; // direct product link (with affiliate tag)
 }
 
 // ── Injection Site ──

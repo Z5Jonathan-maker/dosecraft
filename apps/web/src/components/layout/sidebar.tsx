@@ -11,11 +11,14 @@ import {
   ClipboardCheck,
   BarChart3,
   Calculator,
+  Wrench,
   Menu,
   X,
   FlaskConical,
   ChevronRight,
   Star,
+  ShoppingBag,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth";
 
@@ -26,7 +29,10 @@ const NAV_ITEMS = [
   { label: "Log",        href: "/log",          icon: ClipboardCheck,  color: "#00ff88" },
   { label: "Insights",   href: "/insights",    icon: BarChart3,       color: "#b366ff" },
   { label: "Calculator", href: "/calculator",  icon: Calculator,      color: "#ffaa00" },
+  { label: "Tools",      href: "/tools",       icon: Wrench,          color: "#00d4ff" },
+  { label: "Sources",    href: "/sources",     icon: ShoppingBag,     color: "#00ff88" },
   { label: "Creators",   href: "/creators",    icon: Star,            color: "#ff4444" },
+  { label: "FDA Tracker", href: "/fda-tracker", icon: ShieldCheck,     color: "#00d4ff" },
 ] as const;
 
 export function Sidebar() {

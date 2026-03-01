@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useMemo } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -11,12 +11,18 @@ import {
   Users,
   CheckCircle2,
   Play,
+  Activity,
 } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LaneBadge } from "@/components/peptide/lane-badge";
-import { MOCK_PROTOCOLS, MOCK_CREATORS } from "@/lib/mock-data";
-import type { ProtocolIntensity } from "@/types";
+import {
+  HalfLifeChart,
+  parseHalfLifeToHours,
+  parseTimingToHours,
+} from "@/components/peptide/half-life-chart";
+import { MOCK_PROTOCOLS, MOCK_CREATORS, MOCK_PEPTIDES } from "@/lib/mock-data";
+import type { ProtocolIntensity, EvidenceLane } from "@/types";
 
 interface PageProps {
   readonly params: Promise<{ id: string }>;
@@ -39,6 +45,35 @@ export default function ProtocolDetailPage({ params }: PageProps) {
   const creator = protocol.creatorId
     ? MOCK_CREATORS.find((c) => c.id === protocol.creatorId)
     : null;
+
+  // Build compound curves for the half-life chart
+  const compoundCurves = useMemo(() => {
+    // Determine default view: if any compound has a half-life >= 24h, default weekly
+    const hasLongHalfLife = protocol.peptides.some((pp) => {
+      const peptideData = MOCK_PEPTIDES.find((mp) => mp.slug === pp.slug);
+      if (!peptideData) return false;
+      return parseHalfLifeToHours(peptideData.halfLife) >= 24;
+    });
+    const defaultView = hasLongHalfLife ? "weekly" as const : "daily" as const;
+
+    const curves = protocol.peptides.map((pp) => {
+      const peptideData = MOCK_PEPTIDES.find((mp) => mp.slug === pp.slug);
+      const halfLifeHours = peptideData
+        ? parseHalfLifeToHours(peptideData.halfLife)
+        : 4;
+      const lane: EvidenceLane = peptideData?.lanes[0] ?? "clinical";
+      const injectionHours = parseTimingToHours(pp.timing, pp.frequency, defaultView);
+
+      return {
+        name: pp.name,
+        halfLifeHours,
+        injectionHours,
+        lane,
+      };
+    });
+
+    return { curves, defaultView };
+  }, [protocol.peptides]);
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-fade-in">
@@ -150,6 +185,21 @@ export default function ProtocolDetailPage({ params }: PageProps) {
           )}
         </Card>
       )}
+
+      {/* Pharmacokinetic Timeline */}
+      <Card>
+        <div className="flex items-center gap-2 mb-1">
+          <Activity className="w-4 h-4 text-dc-neon-cyan" />
+          <CardTitle>Pharmacokinetic Timeline</CardTitle>
+        </div>
+        <p className="text-xs text-dc-text-muted mb-4">
+          Projected plasma concentration curves based on half-life data. Hover for details.
+        </p>
+        <HalfLifeChart
+          compounds={compoundCurves.curves}
+          defaultView={compoundCurves.defaultView}
+        />
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Peptides Table */}

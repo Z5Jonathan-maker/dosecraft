@@ -10,6 +10,8 @@ import type {
   Creator,
   DashboardStats,
   InjectionSite,
+  VendorSource,
+  PeptideSource,
 } from "@/types";
 
 // ── Peptides ──────────────────────────────────────────────────────────────────
@@ -22,6 +24,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "healing",
     route: "subcutaneous",
     status: "well-researched",
+    fdaStatus: "research-only",
     halfLife: "4–6 hours",
     typicalDoseRange: "200–500 mcg/day",
     description:
@@ -86,6 +89,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "healing",
     route: "subcutaneous",
     status: "well-researched",
+    fdaStatus: "research-only",
     halfLife: "~24 hours",
     typicalDoseRange: "2–5 mg/week",
     description:
@@ -137,6 +141,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "growth-hormone",
     route: "subcutaneous",
     status: "well-researched",
+    fdaStatus: "research-only",
     halfLife: "CJC-1295: 6–8 days (DAC) | Ipamorelin: 2 hours",
     typicalDoseRange: "CJC: 100–300 mcg + Ipa: 100–300 mcg per dose",
     description:
@@ -199,6 +204,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "metabolic",
     route: "subcutaneous",
     status: "well-researched",
+    fdaStatus: "approved",
     halfLife: "~7 days",
     typicalDoseRange: "0.25–2.4 mg/week",
     description:
@@ -251,6 +257,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "cosmetic",
     route: "topical",
     status: "emerging",
+    fdaStatus: "otc",
     halfLife: "~30 min (injectable)",
     typicalDoseRange: "Topical: 1–2% | Injectable: 50–200 mcg/day",
     description:
@@ -310,6 +317,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "immune",
     route: "subcutaneous",
     status: "emerging",
+    fdaStatus: "research-only",
     halfLife: "~hours",
     typicalDoseRange: "5–10 mg/day (course)",
     description:
@@ -358,6 +366,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "metabolic",
     route: "subcutaneous",
     status: "emerging",
+    fdaStatus: "research-only",
     halfLife: "~30 minutes",
     typicalDoseRange: "5–15 mg/week",
     description:
@@ -406,6 +415,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "neuroprotective",
     route: "intranasal",
     status: "emerging",
+    fdaStatus: "research-only",
     halfLife: "~1–2 hours (intranasal)",
     typicalDoseRange: "250–750 mcg/day (intranasal)",
     description:
@@ -454,6 +464,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "sexual-health",
     route: "subcutaneous",
     status: "well-researched",
+    fdaStatus: "approved",
     halfLife: "~2.7 hours",
     typicalDoseRange: "1–2 mg per use",
     description:
@@ -503,6 +514,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "growth-hormone",
     route: "subcutaneous",
     status: "well-researched",
+    fdaStatus: "research-only",
     halfLife: "~15–60 minutes",
     typicalDoseRange: "100–300 mcg per dose",
     description:
@@ -551,6 +563,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "healing",
     route: "oral",
     status: "experimental",
+    fdaStatus: "research-only",
     halfLife: "4–6 hours",
     typicalDoseRange: "500 mcg – 1 mg/day",
     description:
@@ -589,6 +602,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "hormonal",
     route: "intramuscular",
     status: "well-researched",
+    fdaStatus: "approved",
     halfLife: "8–12 days",
     typicalDoseRange: "100–200 mg/week",
     description:
@@ -642,6 +656,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "hormonal",
     route: "intramuscular",
     status: "well-researched",
+    fdaStatus: "approved",
     halfLife: "5–8 days",
     typicalDoseRange: "100–250 mg/week",
     description:
@@ -694,6 +709,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "hormonal",
     route: "intramuscular",
     status: "well-researched",
+    fdaStatus: "approved",
     halfLife: "2–3 days",
     typicalDoseRange: "25–50 mg EOD",
     description:
@@ -744,6 +760,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "hormonal",
     route: "subcutaneous",
     status: "well-researched",
+    fdaStatus: "approved",
     halfLife: "24–36 hours",
     typicalDoseRange: "250–500 IU 2–3x/week",
     description:
@@ -796,6 +813,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "hormonal",
     route: "oral",
     status: "well-researched",
+    fdaStatus: "approved",
     halfLife: "46–50 hours",
     typicalDoseRange: "0.25–0.5 mg 2–3x/week",
     description:
@@ -848,6 +866,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "hormonal",
     route: "oral",
     status: "emerging",
+    fdaStatus: "compoundable",
     halfLife: "10 hours",
     typicalDoseRange: "12.5–25 mg/day",
     description:
@@ -900,6 +919,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "hormonal",
     route: "oral",
     status: "well-researched",
+    fdaStatus: "supplement",
     halfLife: "15–38 hours",
     typicalDoseRange: "25–100 mg/day",
     description:
@@ -951,6 +971,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "hormonal",
     route: "oral",
     status: "emerging",
+    fdaStatus: "supplement",
     halfLife: "1–2 hours",
     typicalDoseRange: "50–100 mg/day",
     description:
@@ -1003,6 +1024,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "growth-hormone",
     route: "subcutaneous",
     status: "well-researched",
+    fdaStatus: "approved",
     halfLife: "26 minutes",
     typicalDoseRange: "1–2 mg/day",
     description:
@@ -1056,6 +1078,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "growth-hormone",
     route: "subcutaneous",
     status: "well-researched",
+    fdaStatus: "approved",
     halfLife: "10–20 minutes",
     typicalDoseRange: "200–500 mcg/day",
     description:
@@ -1107,6 +1130,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "growth-hormone",
     route: "oral",
     status: "emerging",
+    fdaStatus: "research-only",
     halfLife: "24 hours",
     typicalDoseRange: "10–25 mg/day",
     description:
@@ -1169,6 +1193,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "growth-hormone",
     route: "subcutaneous",
     status: "well-researched",
+    fdaStatus: "research-only",
     halfLife: "~30 minutes",
     typicalDoseRange: "100–300 mcg per dose",
     description:
@@ -1221,6 +1246,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "metabolic",
     route: "subcutaneous",
     status: "emerging",
+    fdaStatus: "research-only",
     halfLife: "~30 minutes",
     typicalDoseRange: "300–600 mcg/day",
     description:
@@ -1271,6 +1297,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "metabolic",
     route: "subcutaneous",
     status: "emerging",
+    fdaStatus: "supplement",
     halfLife: "varies by route",
     typicalDoseRange: "100–500 mg (IV) or 50–250 mg (SubQ)",
     description:
@@ -1335,6 +1362,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "sexual-health",
     route: "subcutaneous",
     status: "experimental",
+    fdaStatus: "caution",
     halfLife: "~1 hour",
     typicalDoseRange: "0.25–0.5 mg per dose",
     description:
@@ -1387,6 +1415,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "sexual-health",
     route: "subcutaneous",
     status: "experimental",
+    fdaStatus: "research-only",
     halfLife: "~28 minutes",
     typicalDoseRange: "5–15 mcg/kg",
     description:
@@ -1438,6 +1467,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "immune",
     route: "subcutaneous",
     status: "well-researched",
+    fdaStatus: "research-only",
     halfLife: "~2 hours",
     typicalDoseRange: "1.6 mg 2x/week",
     description:
@@ -1490,6 +1520,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "immune",
     route: "subcutaneous",
     status: "emerging",
+    fdaStatus: "research-only",
     halfLife: "~4 hours",
     typicalDoseRange: "50–100 mcg/day",
     description:
@@ -1542,6 +1573,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "immune",
     route: "oral",
     status: "experimental",
+    fdaStatus: "research-only",
     halfLife: "~30 minutes",
     typicalDoseRange: "200–500 mcg/day",
     description:
@@ -1594,6 +1626,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "sleep",
     route: "subcutaneous",
     status: "experimental",
+    fdaStatus: "research-only",
     halfLife: "~15 minutes",
     typicalDoseRange: "100–300 mcg before bed",
     description:
@@ -1645,6 +1678,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "neuroprotective",
     route: "intranasal",
     status: "emerging",
+    fdaStatus: "research-only",
     halfLife: "~30 seconds (converted rapidly)",
     typicalDoseRange: "200–600 mcg/day intranasal",
     description:
@@ -1697,6 +1731,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "neuroprotective",
     route: "oral",
     status: "experimental",
+    fdaStatus: "research-only",
     halfLife: "~hours",
     typicalDoseRange: "10–40 mg/day (oral)",
     description:
@@ -1737,6 +1772,7 @@ export const MOCK_PEPTIDES: readonly Peptide[] = [
     category: "neuroprotective",
     route: "subcutaneous",
     status: "emerging",
+    fdaStatus: "research-only",
     halfLife: "~3–4 hours",
     typicalDoseRange: "40 mg/day (SubQ)",
     description:
@@ -3335,4 +3371,160 @@ export const INJECTION_SITES: readonly InjectionSite[] = [
   // ── Back View — SubQ Sites ──
   { id: "upper-back-l",   label: "Upper Back (Left)",     x: 38, y: 35, view: "back", type: "subq", muscle: "Subcutaneous fat", depth: "½ inch, 45°", notes: "Below scapula — less common site" },
   { id: "upper-back-r",   label: "Upper Back (Right)",    x: 62, y: 35, view: "back", type: "subq", muscle: "Subcutaneous fat", depth: "½ inch, 45°", notes: "Below scapula — less common site" },
+] as const;
+
+
+// ── Vendors ──────────────────────────────────────────────────────────────────
+
+export const MOCK_VENDORS: readonly VendorSource[] = [
+  {
+    id: "vendor-premium-peptides",
+    name: "Premium Peptides Co",
+    url: "https://example.com/premium-peptides",
+    type: "research",
+    trustScore: 4.5,
+    pricing: "mid",
+    shipping: "Free over $150 — 2-4 business days",
+    notes: "Third-party COA on every batch. Popular in the research community.",
+    affiliateTag: "?ref=dosecraft",
+  },
+  {
+    id: "vendor-compoundpharm",
+    name: "CompoundPharm Direct",
+    url: "https://example.com/compoundpharm",
+    type: "pharmacy",
+    trustScore: 5,
+    pricing: "premium",
+    shipping: "Overnight cold-chain available — $12 flat",
+    notes: "Licensed 503B compounding pharmacy. Requires valid prescription.",
+    affiliateTag: "?ref=dosecraft",
+  },
+  {
+    id: "vendor-bioresearch",
+    name: "BioResearch Labs",
+    url: "https://example.com/bioresearch",
+    type: "research",
+    trustScore: 4,
+    pricing: "budget",
+    shipping: "USPS Priority — 3-5 business days",
+    notes: "Budget-friendly research supplier. HPLC testing on request.",
+    affiliateTag: "?ref=dosecraft",
+  },
+  {
+    id: "vendor-telehealth-rx",
+    name: "TeleHealth Rx",
+    url: "https://example.com/telehealth-rx",
+    type: "telehealth",
+    trustScore: 5,
+    pricing: "premium",
+    shipping: "Direct from partner pharmacy — 2-3 business days",
+    notes: "Telemedicine consultation included. Board-certified physicians.",
+    affiliateTag: "?ref=dosecraft",
+  },
+  {
+    id: "vendor-peptide-sciences",
+    name: "Peptide Sciences Hub",
+    url: "https://example.com/peptide-sciences",
+    type: "research",
+    trustScore: 4.5,
+    pricing: "mid",
+    shipping: "Free domestic shipping — 2-5 business days",
+    notes: "Extensive catalog with mass spec reports. Research use only.",
+    affiliateTag: "?ref=dosecraft",
+  },
+  {
+    id: "vendor-supplement-warehouse",
+    name: "Supplement Warehouse",
+    url: "https://example.com/supplement-warehouse",
+    type: "supplement",
+    trustScore: 3.5,
+    pricing: "budget",
+    shipping: "Standard shipping $5.99 — 5-7 business days",
+    notes: "OTC supplements and oral peptides only. GMP certified facility.",
+    affiliateTag: "?ref=dosecraft",
+  },
+] as const;
+
+// ── Peptide Sources (vendor x peptide price matrix) ──────────────────────────
+
+export const MOCK_PEPTIDE_SOURCES: readonly PeptideSource[] = [
+  // BPC-157
+  { vendorId: "vendor-premium-peptides",  peptideSlug: "bpc-157", price: 38, vialSize: "5mg",  inStock: true,  url: "https://example.com/premium-peptides/bpc-157?ref=dosecraft" },
+  { vendorId: "vendor-bioresearch",       peptideSlug: "bpc-157", price: 29, vialSize: "5mg",  inStock: true,  url: "https://example.com/bioresearch/bpc-157?ref=dosecraft" },
+  { vendorId: "vendor-compoundpharm",     peptideSlug: "bpc-157", price: 55, vialSize: "5mg",  inStock: true,  url: "https://example.com/compoundpharm/bpc-157?ref=dosecraft" },
+  { vendorId: "vendor-peptide-sciences",  peptideSlug: "bpc-157", price: 42, vialSize: "5mg",  inStock: true,  url: "https://example.com/peptide-sciences/bpc-157?ref=dosecraft" },
+
+  // TB-500
+  { vendorId: "vendor-premium-peptides",  peptideSlug: "tb-500",  price: 45, vialSize: "5mg",  inStock: true,  url: "https://example.com/premium-peptides/tb-500?ref=dosecraft" },
+  { vendorId: "vendor-bioresearch",       peptideSlug: "tb-500",  price: 35, vialSize: "5mg",  inStock: true,  url: "https://example.com/bioresearch/tb-500?ref=dosecraft" },
+  { vendorId: "vendor-peptide-sciences",  peptideSlug: "tb-500",  price: 48, vialSize: "5mg",  inStock: false, url: "https://example.com/peptide-sciences/tb-500?ref=dosecraft" },
+  { vendorId: "vendor-compoundpharm",     peptideSlug: "tb-500",  price: 60, vialSize: "5mg",  inStock: true,  url: "https://example.com/compoundpharm/tb-500?ref=dosecraft" },
+
+  // Testosterone Cypionate
+  { vendorId: "vendor-compoundpharm",     peptideSlug: "testosterone-cypionate", price: 55,  vialSize: "200mg/mL 10mL", inStock: true,  url: "https://example.com/compoundpharm/test-cyp?ref=dosecraft" },
+  { vendorId: "vendor-telehealth-rx",     peptideSlug: "testosterone-cypionate", price: 90,  vialSize: "200mg/mL 10mL", inStock: true,  url: "https://example.com/telehealth-rx/test-cyp?ref=dosecraft" },
+
+  // Semaglutide
+  { vendorId: "vendor-compoundpharm",     peptideSlug: "semaglutide", price: 150, vialSize: "5mg",  inStock: true,  url: "https://example.com/compoundpharm/semaglutide?ref=dosecraft" },
+  { vendorId: "vendor-telehealth-rx",     peptideSlug: "semaglutide", price: 299, vialSize: "5mg",  inStock: true,  url: "https://example.com/telehealth-rx/semaglutide?ref=dosecraft" },
+  { vendorId: "vendor-peptide-sciences",  peptideSlug: "semaglutide", price: 185, vialSize: "5mg",  inStock: true,  url: "https://example.com/peptide-sciences/semaglutide?ref=dosecraft" },
+
+  // CJC-1295/Ipamorelin
+  { vendorId: "vendor-premium-peptides",  peptideSlug: "cjc-1295-ipamorelin", price: 65, vialSize: "5mg blend", inStock: true,  url: "https://example.com/premium-peptides/cjc-ipa?ref=dosecraft" },
+  { vendorId: "vendor-bioresearch",       peptideSlug: "cjc-1295-ipamorelin", price: 50, vialSize: "5mg blend", inStock: true,  url: "https://example.com/bioresearch/cjc-ipa?ref=dosecraft" },
+  { vendorId: "vendor-peptide-sciences",  peptideSlug: "cjc-1295-ipamorelin", price: 72, vialSize: "5mg blend", inStock: true,  url: "https://example.com/peptide-sciences/cjc-ipa?ref=dosecraft" },
+  { vendorId: "vendor-compoundpharm",     peptideSlug: "cjc-1295-ipamorelin", price: 80, vialSize: "5mg blend", inStock: true,  url: "https://example.com/compoundpharm/cjc-ipa?ref=dosecraft" },
+
+  // GHK-Cu
+  { vendorId: "vendor-premium-peptides",  peptideSlug: "ghk-cu", price: 32, vialSize: "50mg",  inStock: true,  url: "https://example.com/premium-peptides/ghk-cu?ref=dosecraft" },
+  { vendorId: "vendor-bioresearch",       peptideSlug: "ghk-cu", price: 25, vialSize: "50mg",  inStock: true,  url: "https://example.com/bioresearch/ghk-cu?ref=dosecraft" },
+  { vendorId: "vendor-supplement-warehouse", peptideSlug: "ghk-cu", price: 19, vialSize: "50mg cream", inStock: true, url: "https://example.com/supplement-warehouse/ghk-cu?ref=dosecraft" },
+
+  // Epithalon
+  { vendorId: "vendor-premium-peptides",  peptideSlug: "epithalon", price: 42, vialSize: "10mg",  inStock: true,  url: "https://example.com/premium-peptides/epithalon?ref=dosecraft" },
+  { vendorId: "vendor-peptide-sciences",  peptideSlug: "epithalon", price: 48, vialSize: "10mg",  inStock: true,  url: "https://example.com/peptide-sciences/epithalon?ref=dosecraft" },
+
+  // MOTS-c
+  { vendorId: "vendor-premium-peptides",  peptideSlug: "mots-c", price: 85, vialSize: "5mg",  inStock: true,  url: "https://example.com/premium-peptides/mots-c?ref=dosecraft" },
+  { vendorId: "vendor-peptide-sciences",  peptideSlug: "mots-c", price: 90, vialSize: "5mg",  inStock: false, url: "https://example.com/peptide-sciences/mots-c?ref=dosecraft" },
+
+  // Selank
+  { vendorId: "vendor-bioresearch",       peptideSlug: "selank", price: 28, vialSize: "5mg",  inStock: true,  url: "https://example.com/bioresearch/selank?ref=dosecraft" },
+  { vendorId: "vendor-peptide-sciences",  peptideSlug: "selank", price: 35, vialSize: "5mg",  inStock: true,  url: "https://example.com/peptide-sciences/selank?ref=dosecraft" },
+
+  // PT-141
+  { vendorId: "vendor-premium-peptides",  peptideSlug: "pt-141", price: 38, vialSize: "10mg",  inStock: true,  url: "https://example.com/premium-peptides/pt-141?ref=dosecraft" },
+  { vendorId: "vendor-telehealth-rx",     peptideSlug: "pt-141", price: 75, vialSize: "10mg",  inStock: true,  url: "https://example.com/telehealth-rx/pt-141?ref=dosecraft" },
+  { vendorId: "vendor-compoundpharm",     peptideSlug: "pt-141", price: 55, vialSize: "10mg",  inStock: true,  url: "https://example.com/compoundpharm/pt-141?ref=dosecraft" },
+
+  // MK-677
+  { vendorId: "vendor-bioresearch",       peptideSlug: "mk-677", price: 45, vialSize: "25mg x 30 caps", inStock: true,  url: "https://example.com/bioresearch/mk-677?ref=dosecraft" },
+  { vendorId: "vendor-supplement-warehouse", peptideSlug: "mk-677", price: 39, vialSize: "10mg x 60 caps", inStock: true, url: "https://example.com/supplement-warehouse/mk-677?ref=dosecraft" },
+
+  // NAD+
+  { vendorId: "vendor-supplement-warehouse", peptideSlug: "nad-plus", price: 45, vialSize: "250mg x 60 caps", inStock: true, url: "https://example.com/supplement-warehouse/nad-plus?ref=dosecraft" },
+  { vendorId: "vendor-telehealth-rx",     peptideSlug: "nad-plus", price: 250, vialSize: "500mg IV kit", inStock: true,  url: "https://example.com/telehealth-rx/nad-plus?ref=dosecraft" },
+
+  // AOD-9604
+  { vendorId: "vendor-premium-peptides",  peptideSlug: "aod-9604", price: 42, vialSize: "5mg",  inStock: true,  url: "https://example.com/premium-peptides/aod-9604?ref=dosecraft" },
+  { vendorId: "vendor-bioresearch",       peptideSlug: "aod-9604", price: 35, vialSize: "5mg",  inStock: true,  url: "https://example.com/bioresearch/aod-9604?ref=dosecraft" },
+
+  // HCG
+  { vendorId: "vendor-compoundpharm",     peptideSlug: "hcg", price: 65, vialSize: "5000 IU", inStock: true,  url: "https://example.com/compoundpharm/hcg?ref=dosecraft" },
+  { vendorId: "vendor-telehealth-rx",     peptideSlug: "hcg", price: 85, vialSize: "5000 IU", inStock: true,  url: "https://example.com/telehealth-rx/hcg?ref=dosecraft" },
+
+  // Thymosin Alpha-1
+  { vendorId: "vendor-premium-peptides",  peptideSlug: "thymosin-alpha-1", price: 55, vialSize: "5mg",  inStock: true,  url: "https://example.com/premium-peptides/ta1?ref=dosecraft" },
+  { vendorId: "vendor-peptide-sciences",  peptideSlug: "thymosin-alpha-1", price: 60, vialSize: "5mg",  inStock: true,  url: "https://example.com/peptide-sciences/ta1?ref=dosecraft" },
+
+  // LL-37
+  { vendorId: "vendor-premium-peptides",  peptideSlug: "ll-37", price: 62, vialSize: "5mg",  inStock: true,  url: "https://example.com/premium-peptides/ll-37?ref=dosecraft" },
+  { vendorId: "vendor-bioresearch",       peptideSlug: "ll-37", price: 48, vialSize: "5mg",  inStock: false, url: "https://example.com/bioresearch/ll-37?ref=dosecraft" },
+
+  // DHEA (supplement)
+  { vendorId: "vendor-supplement-warehouse", peptideSlug: "dhea", price: 12, vialSize: "50mg x 90 caps", inStock: true, url: "https://example.com/supplement-warehouse/dhea?ref=dosecraft" },
+
+  // Melanotan II
+  { vendorId: "vendor-bioresearch",       peptideSlug: "melanotan-ii", price: 28, vialSize: "10mg",  inStock: true,  url: "https://example.com/bioresearch/mt2?ref=dosecraft" },
+  { vendorId: "vendor-premium-peptides",  peptideSlug: "melanotan-ii", price: 35, vialSize: "10mg",  inStock: true,  url: "https://example.com/premium-peptides/mt2?ref=dosecraft" },
 ] as const;
