@@ -2,6 +2,8 @@
 
 import { FlaskConical, Twitter, Github, ExternalLink } from "lucide-react";
 
+const WEB_APP = "https://dosecraft-web.vercel.app";
+
 const FOOTER_SECTIONS = [
   {
     title: "Product",
@@ -9,17 +11,16 @@ const FOOTER_SECTIONS = [
       { label: "Features", href: "#features" },
       { label: "Evidence Lanes", href: "#lanes" },
       { label: "Pricing", href: "#pricing" },
-      { label: "Protocol Marketplace", href: "#" },
       { label: "Waitlist", href: "#waitlist" },
     ],
   },
   {
-    title: "Company",
+    title: "Resources",
     links: [
-      { label: "About", href: "#" },
-      { label: "Blog", href: "#" },
-      { label: "Careers", href: "#" },
-      { label: "Contact", href: "#" },
+      { label: "Peptide Library", href: `${WEB_APP}/library` },
+      { label: "Dose Calculator", href: `${WEB_APP}/calculator` },
+      { label: "Protocol Builder", href: `${WEB_APP}/protocols/builder` },
+      { label: "Contact", href: "mailto:z5jonathan@icloud.com" },
     ],
   },
   {
@@ -28,7 +29,6 @@ const FOOTER_SECTIONS = [
       { label: "Privacy Policy", href: "#" },
       { label: "Terms of Service", href: "#" },
       { label: "Disclaimer", href: "#" },
-      { label: "Cookie Policy", href: "#" },
     ],
   },
 ];
@@ -66,7 +66,7 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-3">
               <a
-                href="https://twitter.com"
+                href="https://x.com/dosecraft"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-dc-text-muted hover:text-dc-text transition-colors"
@@ -75,7 +75,7 @@ export default function Footer() {
                 <Twitter className="w-3.5 h-3.5" />
               </a>
               <a
-                href="https://github.com"
+                href="https://github.com/Z5Jonathan-maker"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-dc-text-muted hover:text-dc-text transition-colors"
@@ -114,6 +114,9 @@ export default function Footer() {
                     ) : (
                       <a
                         href={link.href}
+                        {...(link.href.startsWith("http") || link.href.startsWith("mailto:")
+                          ? { target: "_blank", rel: "noopener noreferrer" }
+                          : {})}
                         className="text-sm text-dc-text-muted hover:text-dc-text transition-colors"
                       >
                         {link.label}

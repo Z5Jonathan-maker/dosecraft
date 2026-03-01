@@ -45,6 +45,13 @@ export default function LogPage() {
     notes: "",
   });
   const [logSuccess, setLogSuccess] = useState(false);
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  const weekStart = new Date();
+  weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7) + weekOffset * 7);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  const weekLabel = `${weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 
   const handleQuickLog = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,11 +106,17 @@ export default function LogPage() {
                 <CardTitle>Weekly Calendar</CardTitle>
               </div>
               <div className="flex items-center gap-1">
-                <button className="p-1.5 rounded-lg hover:bg-dc-surface-alt text-dc-text-muted hover:text-dc-text transition-colors">
+                <button
+                  onClick={() => setWeekOffset((o) => o - 1)}
+                  className="p-1.5 rounded-lg hover:bg-dc-surface-alt text-dc-text-muted hover:text-dc-text transition-colors"
+                >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <span className="text-xs text-dc-text-muted px-2">Feb 24 – Mar 2</span>
-                <button className="p-1.5 rounded-lg hover:bg-dc-surface-alt text-dc-text-muted hover:text-dc-text transition-colors">
+                <span className="text-xs text-dc-text-muted px-2">{weekLabel}</span>
+                <button
+                  onClick={() => setWeekOffset((o) => Math.min(o + 1, 0))}
+                  className="p-1.5 rounded-lg hover:bg-dc-surface-alt text-dc-text-muted hover:text-dc-text transition-colors"
+                >
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
