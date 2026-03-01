@@ -9,6 +9,9 @@ import {
   Layers,
   DollarSign,
   Wrench,
+  Timer,
+  ArrowLeftRight,
+  Syringe,
 } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
 
@@ -53,6 +56,27 @@ const TOOLS = [
     description: "Build custom protocols with AI-powered suggestions, dose configurations, and scheduling.",
     href: "/protocols/builder",
     icon: Layers,
+    color: "#ff6b35",
+  },
+  {
+    title: "Vial Duration & Cost",
+    description: "Calculate how long a vial lasts, estimated depletion date, and full cost breakdown per dose, week, and month.",
+    href: "/tools/vial-duration",
+    icon: Timer,
+    color: "#00d4ff",
+  },
+  {
+    title: "Unit Converter",
+    description: "Convert between mcg, mg, mL, and IU with compound-specific factors for HGH, Insulin, HCG, and custom compounds.",
+    href: "/tools/unit-converter",
+    icon: ArrowLeftRight,
+    color: "#00ff88",
+  },
+  {
+    title: "Dosage Calculator",
+    description: "Calculate exact syringe units to draw from reconstituted vials with a visual syringe fill indicator.",
+    href: "/tools/dosage-calc",
+    icon: Syringe,
     color: "#ff6b35",
   },
 ] as const;

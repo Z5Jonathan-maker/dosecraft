@@ -211,6 +211,40 @@ export interface PeptideSource {
   readonly url: string; // direct product link (with affiliate tag)
 }
 
+// ── Wellness ──
+export interface WellnessEntry {
+  readonly id: string;
+  readonly date: string; // YYYY-MM-DD
+  readonly mood: number; // 1-5
+  readonly energy: number; // 1-5
+  readonly sleepQuality: number; // 1-5
+  readonly sleepHours: number; // 0-16
+  readonly weight: number | null; // lbs, optional
+  readonly bodyFat: number | null; // %, optional
+  readonly notes: string;
+  readonly createdAt: string; // ISO timestamp
+}
+
+// ── Inventory / Vial Management ──
+export type VialStatus = "in-stock" | "low" | "critical" | "depleted";
+
+export interface InventoryItem {
+  readonly id: string;
+  readonly peptideSlug: string;
+  readonly peptideName: string;
+  readonly vialSizeMg: number;
+  readonly remainingMg: number;
+  readonly reconstitutionVolumeMl: number;
+  readonly dosePerInjectionMcg: number;
+  readonly injectionsPerWeek: number;
+  readonly costPerVial: number;
+  readonly purchaseDate: string;
+  readonly expirationDate?: string;
+  readonly vendor?: string;
+  readonly lotNumber?: string;
+  readonly notes?: string;
+}
+
 // ── Injection Site ──
 export type InjectionType = "subq" | "im";
 export type BodyView = "front" | "back";
