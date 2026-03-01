@@ -3378,36 +3378,58 @@ export const INJECTION_SITES: readonly InjectionSite[] = [
 
 export const MOCK_VENDORS: readonly VendorSource[] = [
   {
-    id: "vendor-premium-peptides",
-    name: "Premium Peptides Co",
-    url: "https://example.com/premium-peptides",
+    id: "vendor-apex",
+    name: "Apex Peptides",
+    url: "https://apex-peptides.com/?ref=dosecraft",
     type: "research",
     trustScore: 4.5,
     pricing: "mid",
-    shipping: "Free over $150 — 2-4 business days",
-    notes: "Third-party COA on every batch. Popular in the research community.",
+    shipping: "UPS tracked — ships same day",
+    notes: "COA on every batch. BPC-157, TB-500, Semaglutide, Retatrutide, and \"Wolverine\" blends.",
     affiliateTag: "?ref=dosecraft",
   },
   {
-    id: "vendor-compoundpharm",
-    name: "CompoundPharm Direct",
-    url: "https://example.com/compoundpharm",
-    type: "pharmacy",
-    trustScore: 5,
-    pricing: "premium",
-    shipping: "Overnight cold-chain available — $12 flat",
-    notes: "Licensed 503B compounding pharmacy. Requires valid prescription.",
+    id: "vendor-paramount",
+    name: "Paramount Peptides",
+    url: "https://paramountpeptides.com/?ref=dosecraft",
+    type: "research",
+    trustScore: 4.5,
+    pricing: "mid",
+    shipping: "Free over $300 — domestic US",
+    notes: "12+ years in business. In-house synthesis, HPLC tested, BBB listed. Injectables, tablets, nasal sprays.",
     affiliateTag: "?ref=dosecraft",
   },
   {
-    id: "vendor-bioresearch",
-    name: "BioResearch Labs",
-    url: "https://example.com/bioresearch",
+    id: "vendor-purerawz",
+    name: "Pure Rawz",
+    url: "https://purerawz.co/?ref=dosecraft",
     type: "research",
     trustScore: 4,
     pricing: "budget",
-    shipping: "USPS Priority — 3-5 business days",
-    notes: "Budget-friendly research supplier. HPLC testing on request.",
+    shipping: "Domestic & international — tracked",
+    notes: "Widest catalog: peptides, SARMs, nootropics. Rewards program. Multiple formats (liquid, powder, capsule, spray).",
+    affiliateTag: "?ref=dosecraft",
+  },
+  {
+    id: "vendor-alphaomega",
+    name: "Alpha & Omega Peptide",
+    url: "https://alphaomegapeptide.com/?ref=dosecraft",
+    type: "research",
+    trustScore: 4,
+    pricing: "mid",
+    shipping: "FedEx 2-Day included on all orders",
+    notes: "US GMP-certified facility. 30-day money-back guarantee. Rated 4.3/5 on Trustpilot.",
+    affiliateTag: "?ref=dosecraft",
+  },
+  {
+    id: "vendor-stratelabs",
+    name: "Strate Labs",
+    url: "https://stratelabs.ca/?ref=dosecraft",
+    type: "research",
+    trustScore: 4,
+    pricing: "budget",
+    shipping: "Free over $250 — Canadian-based",
+    notes: "10+ years. Best testing transparency: 11 analytical methods (NMR, HPLC, LC-MS, etc.). Volume discounts up to 30%.",
     affiliateTag: "?ref=dosecraft",
   },
   {
@@ -3421,110 +3443,122 @@ export const MOCK_VENDORS: readonly VendorSource[] = [
     notes: "Telemedicine consultation included. Board-certified physicians.",
     affiliateTag: "?ref=dosecraft",
   },
-  {
-    id: "vendor-peptide-sciences",
-    name: "Peptide Sciences Hub",
-    url: "https://example.com/peptide-sciences",
-    type: "research",
-    trustScore: 4.5,
-    pricing: "mid",
-    shipping: "Free domestic shipping — 2-5 business days",
-    notes: "Extensive catalog with mass spec reports. Research use only.",
-    affiliateTag: "?ref=dosecraft",
-  },
-  {
-    id: "vendor-supplement-warehouse",
-    name: "Supplement Warehouse",
-    url: "https://example.com/supplement-warehouse",
-    type: "supplement",
-    trustScore: 3.5,
-    pricing: "budget",
-    shipping: "Standard shipping $5.99 — 5-7 business days",
-    notes: "OTC supplements and oral peptides only. GMP certified facility.",
-    affiliateTag: "?ref=dosecraft",
-  },
 ] as const;
 
 // ── Peptide Sources (vendor x peptide price matrix) ──────────────────────────
 
 export const MOCK_PEPTIDE_SOURCES: readonly PeptideSource[] = [
   // BPC-157
-  { vendorId: "vendor-premium-peptides",  peptideSlug: "bpc-157", price: 38, vialSize: "5mg",  inStock: true,  url: "https://example.com/premium-peptides/bpc-157?ref=dosecraft" },
-  { vendorId: "vendor-bioresearch",       peptideSlug: "bpc-157", price: 29, vialSize: "5mg",  inStock: true,  url: "https://example.com/bioresearch/bpc-157?ref=dosecraft" },
-  { vendorId: "vendor-compoundpharm",     peptideSlug: "bpc-157", price: 55, vialSize: "5mg",  inStock: true,  url: "https://example.com/compoundpharm/bpc-157?ref=dosecraft" },
-  { vendorId: "vendor-peptide-sciences",  peptideSlug: "bpc-157", price: 42, vialSize: "5mg",  inStock: true,  url: "https://example.com/peptide-sciences/bpc-157?ref=dosecraft" },
+  { vendorId: "vendor-apex",        peptideSlug: "bpc-157", price: 38,  vialSize: "5mg",  inStock: true,  url: "https://apex-peptides.com/bpc-157?ref=dosecraft" },
+  { vendorId: "vendor-paramount",   peptideSlug: "bpc-157", price: 75,  vialSize: "10mg", inStock: true,  url: "https://paramountpeptides.com/bpc-157?ref=dosecraft" },
+  { vendorId: "vendor-purerawz",    peptideSlug: "bpc-157", price: 50,  vialSize: "5mg",  inStock: true,  url: "https://purerawz.co/bpc-157?ref=dosecraft" },
+  { vendorId: "vendor-stratelabs",  peptideSlug: "bpc-157", price: 45,  vialSize: "5mg",  inStock: true,  url: "https://stratelabs.ca/bpc-157?ref=dosecraft" },
+  { vendorId: "vendor-alphaomega",  peptideSlug: "bpc-157", price: 42,  vialSize: "10mg", inStock: true,  url: "https://alphaomegapeptide.com/bpc-157?ref=dosecraft" },
 
   // TB-500
-  { vendorId: "vendor-premium-peptides",  peptideSlug: "tb-500",  price: 45, vialSize: "5mg",  inStock: true,  url: "https://example.com/premium-peptides/tb-500?ref=dosecraft" },
-  { vendorId: "vendor-bioresearch",       peptideSlug: "tb-500",  price: 35, vialSize: "5mg",  inStock: true,  url: "https://example.com/bioresearch/tb-500?ref=dosecraft" },
-  { vendorId: "vendor-peptide-sciences",  peptideSlug: "tb-500",  price: 48, vialSize: "5mg",  inStock: false, url: "https://example.com/peptide-sciences/tb-500?ref=dosecraft" },
-  { vendorId: "vendor-compoundpharm",     peptideSlug: "tb-500",  price: 60, vialSize: "5mg",  inStock: true,  url: "https://example.com/compoundpharm/tb-500?ref=dosecraft" },
+  { vendorId: "vendor-apex",        peptideSlug: "tb-500",  price: 45,  vialSize: "5mg",  inStock: true,  url: "https://apex-peptides.com/tb-500?ref=dosecraft" },
+  { vendorId: "vendor-purerawz",    peptideSlug: "tb-500",  price: 55,  vialSize: "5mg",  inStock: true,  url: "https://purerawz.co/tb-500?ref=dosecraft" },
+  { vendorId: "vendor-stratelabs",  peptideSlug: "tb-500",  price: 48,  vialSize: "5mg",  inStock: true,  url: "https://stratelabs.ca/tb-500?ref=dosecraft" },
+  { vendorId: "vendor-paramount",   peptideSlug: "tb-500",  price: 58,  vialSize: "5mg",  inStock: false, url: "https://paramountpeptides.com/tb-500?ref=dosecraft" },
 
-  // Testosterone Cypionate
-  { vendorId: "vendor-compoundpharm",     peptideSlug: "testosterone-cypionate", price: 55,  vialSize: "200mg/mL 10mL", inStock: true,  url: "https://example.com/compoundpharm/test-cyp?ref=dosecraft" },
-  { vendorId: "vendor-telehealth-rx",     peptideSlug: "testosterone-cypionate", price: 90,  vialSize: "200mg/mL 10mL", inStock: true,  url: "https://example.com/telehealth-rx/test-cyp?ref=dosecraft" },
+  // Testosterone Cypionate (telehealth only for TRT)
+  { vendorId: "vendor-telehealth-rx", peptideSlug: "testosterone-cypionate", price: 90, vialSize: "200mg/mL 10mL", inStock: true, url: "https://example.com/telehealth-rx/test-cyp?ref=dosecraft" },
 
   // Semaglutide
-  { vendorId: "vendor-compoundpharm",     peptideSlug: "semaglutide", price: 150, vialSize: "5mg",  inStock: true,  url: "https://example.com/compoundpharm/semaglutide?ref=dosecraft" },
-  { vendorId: "vendor-telehealth-rx",     peptideSlug: "semaglutide", price: 299, vialSize: "5mg",  inStock: true,  url: "https://example.com/telehealth-rx/semaglutide?ref=dosecraft" },
-  { vendorId: "vendor-peptide-sciences",  peptideSlug: "semaglutide", price: 185, vialSize: "5mg",  inStock: true,  url: "https://example.com/peptide-sciences/semaglutide?ref=dosecraft" },
+  { vendorId: "vendor-purerawz",      peptideSlug: "semaglutide", price: 101, vialSize: "5mg",  inStock: true,  url: "https://purerawz.co/semaglutide?ref=dosecraft" },
+  { vendorId: "vendor-stratelabs",    peptideSlug: "semaglutide", price: 125, vialSize: "4mg",  inStock: false, url: "https://stratelabs.ca/semaglutide?ref=dosecraft" },
+  { vendorId: "vendor-telehealth-rx", peptideSlug: "semaglutide", price: 299, vialSize: "5mg",  inStock: true,  url: "https://example.com/telehealth-rx/semaglutide?ref=dosecraft" },
 
   // CJC-1295/Ipamorelin
-  { vendorId: "vendor-premium-peptides",  peptideSlug: "cjc-1295-ipamorelin", price: 65, vialSize: "5mg blend", inStock: true,  url: "https://example.com/premium-peptides/cjc-ipa?ref=dosecraft" },
-  { vendorId: "vendor-bioresearch",       peptideSlug: "cjc-1295-ipamorelin", price: 50, vialSize: "5mg blend", inStock: true,  url: "https://example.com/bioresearch/cjc-ipa?ref=dosecraft" },
-  { vendorId: "vendor-peptide-sciences",  peptideSlug: "cjc-1295-ipamorelin", price: 72, vialSize: "5mg blend", inStock: true,  url: "https://example.com/peptide-sciences/cjc-ipa?ref=dosecraft" },
-  { vendorId: "vendor-compoundpharm",     peptideSlug: "cjc-1295-ipamorelin", price: 80, vialSize: "5mg blend", inStock: true,  url: "https://example.com/compoundpharm/cjc-ipa?ref=dosecraft" },
+  { vendorId: "vendor-apex",        peptideSlug: "cjc-1295-ipamorelin", price: 65,  vialSize: "5mg blend", inStock: true,  url: "https://apex-peptides.com/cjc-ipa?ref=dosecraft" },
+  { vendorId: "vendor-purerawz",    peptideSlug: "cjc-1295-ipamorelin", price: 38,  vialSize: "5mg blend", inStock: true,  url: "https://purerawz.co/cjc-ipa?ref=dosecraft" },
+  { vendorId: "vendor-stratelabs",  peptideSlug: "cjc-1295-ipamorelin", price: 80,  vialSize: "5mg+5mg",  inStock: true,  url: "https://stratelabs.ca/cjc-ipa?ref=dosecraft" },
+  { vendorId: "vendor-paramount",   peptideSlug: "cjc-1295-ipamorelin", price: 95,  vialSize: "2X Blend", inStock: true,  url: "https://paramountpeptides.com/cjc-ipa?ref=dosecraft" },
 
   // GHK-Cu
-  { vendorId: "vendor-premium-peptides",  peptideSlug: "ghk-cu", price: 32, vialSize: "50mg",  inStock: true,  url: "https://example.com/premium-peptides/ghk-cu?ref=dosecraft" },
-  { vendorId: "vendor-bioresearch",       peptideSlug: "ghk-cu", price: 25, vialSize: "50mg",  inStock: true,  url: "https://example.com/bioresearch/ghk-cu?ref=dosecraft" },
-  { vendorId: "vendor-supplement-warehouse", peptideSlug: "ghk-cu", price: 19, vialSize: "50mg cream", inStock: true, url: "https://example.com/supplement-warehouse/ghk-cu?ref=dosecraft" },
+  { vendorId: "vendor-apex",        peptideSlug: "ghk-cu", price: 32, vialSize: "50mg",  inStock: true,  url: "https://apex-peptides.com/ghk-cu?ref=dosecraft" },
+  { vendorId: "vendor-stratelabs",  peptideSlug: "ghk-cu", price: 60, vialSize: "50mg",  inStock: true,  url: "https://stratelabs.ca/ghk-cu?ref=dosecraft" },
+  { vendorId: "vendor-purerawz",    peptideSlug: "ghk-cu", price: 25, vialSize: "50mg",  inStock: true,  url: "https://purerawz.co/ghk-cu?ref=dosecraft" },
 
   // Epithalon
-  { vendorId: "vendor-premium-peptides",  peptideSlug: "epithalon", price: 42, vialSize: "10mg",  inStock: true,  url: "https://example.com/premium-peptides/epithalon?ref=dosecraft" },
-  { vendorId: "vendor-peptide-sciences",  peptideSlug: "epithalon", price: 48, vialSize: "10mg",  inStock: true,  url: "https://example.com/peptide-sciences/epithalon?ref=dosecraft" },
+  { vendorId: "vendor-apex",        peptideSlug: "epithalon", price: 42, vialSize: "10mg",  inStock: true,  url: "https://apex-peptides.com/epithalon?ref=dosecraft" },
+  { vendorId: "vendor-paramount",   peptideSlug: "epithalon", price: 48, vialSize: "10mg",  inStock: true,  url: "https://paramountpeptides.com/epithalon?ref=dosecraft" },
 
   // MOTS-c
-  { vendorId: "vendor-premium-peptides",  peptideSlug: "mots-c", price: 85, vialSize: "5mg",  inStock: true,  url: "https://example.com/premium-peptides/mots-c?ref=dosecraft" },
-  { vendorId: "vendor-peptide-sciences",  peptideSlug: "mots-c", price: 90, vialSize: "5mg",  inStock: false, url: "https://example.com/peptide-sciences/mots-c?ref=dosecraft" },
+  { vendorId: "vendor-paramount",   peptideSlug: "mots-c", price: 65, vialSize: "10mg", inStock: true,  url: "https://paramountpeptides.com/mots-c?ref=dosecraft" },
+  { vendorId: "vendor-apex",        peptideSlug: "mots-c", price: 85, vialSize: "5mg",  inStock: true,  url: "https://apex-peptides.com/mots-c?ref=dosecraft" },
 
   // Selank
-  { vendorId: "vendor-bioresearch",       peptideSlug: "selank", price: 28, vialSize: "5mg",  inStock: true,  url: "https://example.com/bioresearch/selank?ref=dosecraft" },
-  { vendorId: "vendor-peptide-sciences",  peptideSlug: "selank", price: 35, vialSize: "5mg",  inStock: true,  url: "https://example.com/peptide-sciences/selank?ref=dosecraft" },
+  { vendorId: "vendor-purerawz",    peptideSlug: "selank", price: 28, vialSize: "5mg",  inStock: true,  url: "https://purerawz.co/selank?ref=dosecraft" },
+  { vendorId: "vendor-stratelabs",  peptideSlug: "selank", price: 35, vialSize: "5mg",  inStock: true,  url: "https://stratelabs.ca/selank?ref=dosecraft" },
 
   // PT-141
-  { vendorId: "vendor-premium-peptides",  peptideSlug: "pt-141", price: 38, vialSize: "10mg",  inStock: true,  url: "https://example.com/premium-peptides/pt-141?ref=dosecraft" },
-  { vendorId: "vendor-telehealth-rx",     peptideSlug: "pt-141", price: 75, vialSize: "10mg",  inStock: true,  url: "https://example.com/telehealth-rx/pt-141?ref=dosecraft" },
-  { vendorId: "vendor-compoundpharm",     peptideSlug: "pt-141", price: 55, vialSize: "10mg",  inStock: true,  url: "https://example.com/compoundpharm/pt-141?ref=dosecraft" },
+  { vendorId: "vendor-apex",          peptideSlug: "pt-141", price: 38,  vialSize: "10mg",  inStock: true,  url: "https://apex-peptides.com/pt-141?ref=dosecraft" },
+  { vendorId: "vendor-purerawz",      peptideSlug: "pt-141", price: 42,  vialSize: "10mg",  inStock: true,  url: "https://purerawz.co/pt-141?ref=dosecraft" },
+  { vendorId: "vendor-telehealth-rx", peptideSlug: "pt-141", price: 75,  vialSize: "10mg",  inStock: true,  url: "https://example.com/telehealth-rx/pt-141?ref=dosecraft" },
 
   // MK-677
-  { vendorId: "vendor-bioresearch",       peptideSlug: "mk-677", price: 45, vialSize: "25mg x 30 caps", inStock: true,  url: "https://example.com/bioresearch/mk-677?ref=dosecraft" },
-  { vendorId: "vendor-supplement-warehouse", peptideSlug: "mk-677", price: 39, vialSize: "10mg x 60 caps", inStock: true, url: "https://example.com/supplement-warehouse/mk-677?ref=dosecraft" },
+  { vendorId: "vendor-purerawz",    peptideSlug: "mk-677", price: 45, vialSize: "25mg x 30 caps", inStock: true,  url: "https://purerawz.co/mk-677?ref=dosecraft" },
+  { vendorId: "vendor-stratelabs",  peptideSlug: "mk-677", price: 39, vialSize: "10mg x 60 caps", inStock: true,  url: "https://stratelabs.ca/mk-677?ref=dosecraft" },
 
   // NAD+
-  { vendorId: "vendor-supplement-warehouse", peptideSlug: "nad-plus", price: 45, vialSize: "250mg x 60 caps", inStock: true, url: "https://example.com/supplement-warehouse/nad-plus?ref=dosecraft" },
-  { vendorId: "vendor-telehealth-rx",     peptideSlug: "nad-plus", price: 250, vialSize: "500mg IV kit", inStock: true,  url: "https://example.com/telehealth-rx/nad-plus?ref=dosecraft" },
+  { vendorId: "vendor-purerawz",      peptideSlug: "nad-plus", price: 45,  vialSize: "250mg x 60 caps", inStock: true, url: "https://purerawz.co/nad-plus?ref=dosecraft" },
+  { vendorId: "vendor-telehealth-rx", peptideSlug: "nad-plus", price: 250, vialSize: "500mg IV kit",    inStock: true, url: "https://example.com/telehealth-rx/nad-plus?ref=dosecraft" },
 
   // AOD-9604
-  { vendorId: "vendor-premium-peptides",  peptideSlug: "aod-9604", price: 42, vialSize: "5mg",  inStock: true,  url: "https://example.com/premium-peptides/aod-9604?ref=dosecraft" },
-  { vendorId: "vendor-bioresearch",       peptideSlug: "aod-9604", price: 35, vialSize: "5mg",  inStock: true,  url: "https://example.com/bioresearch/aod-9604?ref=dosecraft" },
+  { vendorId: "vendor-apex",        peptideSlug: "aod-9604", price: 42, vialSize: "5mg",  inStock: true,  url: "https://apex-peptides.com/aod-9604?ref=dosecraft" },
+  { vendorId: "vendor-purerawz",    peptideSlug: "aod-9604", price: 35, vialSize: "5mg",  inStock: true,  url: "https://purerawz.co/aod-9604?ref=dosecraft" },
 
   // HCG
-  { vendorId: "vendor-compoundpharm",     peptideSlug: "hcg", price: 65, vialSize: "5000 IU", inStock: true,  url: "https://example.com/compoundpharm/hcg?ref=dosecraft" },
-  { vendorId: "vendor-telehealth-rx",     peptideSlug: "hcg", price: 85, vialSize: "5000 IU", inStock: true,  url: "https://example.com/telehealth-rx/hcg?ref=dosecraft" },
+  { vendorId: "vendor-stratelabs",    peptideSlug: "hcg", price: 70, vialSize: "5000 IU", inStock: true,  url: "https://stratelabs.ca/hcg?ref=dosecraft" },
+  { vendorId: "vendor-telehealth-rx", peptideSlug: "hcg", price: 85, vialSize: "5000 IU", inStock: true,  url: "https://example.com/telehealth-rx/hcg?ref=dosecraft" },
 
   // Thymosin Alpha-1
-  { vendorId: "vendor-premium-peptides",  peptideSlug: "thymosin-alpha-1", price: 55, vialSize: "5mg",  inStock: true,  url: "https://example.com/premium-peptides/ta1?ref=dosecraft" },
-  { vendorId: "vendor-peptide-sciences",  peptideSlug: "thymosin-alpha-1", price: 60, vialSize: "5mg",  inStock: true,  url: "https://example.com/peptide-sciences/ta1?ref=dosecraft" },
+  { vendorId: "vendor-apex",        peptideSlug: "thymosin-alpha-1", price: 55, vialSize: "5mg",  inStock: true,  url: "https://apex-peptides.com/ta1?ref=dosecraft" },
+  { vendorId: "vendor-paramount",   peptideSlug: "thymosin-alpha-1", price: 60, vialSize: "5mg",  inStock: true,  url: "https://paramountpeptides.com/ta1?ref=dosecraft" },
 
   // LL-37
-  { vendorId: "vendor-premium-peptides",  peptideSlug: "ll-37", price: 62, vialSize: "5mg",  inStock: true,  url: "https://example.com/premium-peptides/ll-37?ref=dosecraft" },
-  { vendorId: "vendor-bioresearch",       peptideSlug: "ll-37", price: 48, vialSize: "5mg",  inStock: false, url: "https://example.com/bioresearch/ll-37?ref=dosecraft" },
+  { vendorId: "vendor-paramount",   peptideSlug: "ll-37", price: 100, vialSize: "10mg", inStock: true,  url: "https://paramountpeptides.com/ll-37?ref=dosecraft" },
+  { vendorId: "vendor-apex",        peptideSlug: "ll-37", price: 62,  vialSize: "5mg",  inStock: true,  url: "https://apex-peptides.com/ll-37?ref=dosecraft" },
 
-  // DHEA (supplement)
-  { vendorId: "vendor-supplement-warehouse", peptideSlug: "dhea", price: 12, vialSize: "50mg x 90 caps", inStock: true, url: "https://example.com/supplement-warehouse/dhea?ref=dosecraft" },
+  // DHEA (supplement — widely available)
+  { vendorId: "vendor-purerawz",    peptideSlug: "dhea", price: 15, vialSize: "50mg x 90 caps", inStock: true, url: "https://purerawz.co/dhea?ref=dosecraft" },
 
   // Melanotan II
-  { vendorId: "vendor-bioresearch",       peptideSlug: "melanotan-ii", price: 28, vialSize: "10mg",  inStock: true,  url: "https://example.com/bioresearch/mt2?ref=dosecraft" },
-  { vendorId: "vendor-premium-peptides",  peptideSlug: "melanotan-ii", price: 35, vialSize: "10mg",  inStock: true,  url: "https://example.com/premium-peptides/mt2?ref=dosecraft" },
+  { vendorId: "vendor-purerawz",    peptideSlug: "melanotan-ii", price: 28, vialSize: "10mg",  inStock: true,  url: "https://purerawz.co/mt2?ref=dosecraft" },
+  { vendorId: "vendor-apex",        peptideSlug: "melanotan-ii", price: 35, vialSize: "10mg",  inStock: true,  url: "https://apex-peptides.com/mt2?ref=dosecraft" },
+
+  // Tesamorelin
+  { vendorId: "vendor-apex",        peptideSlug: "tesamorelin", price: 85, vialSize: "5mg",  inStock: true,  url: "https://apex-peptides.com/tesamorelin?ref=dosecraft" },
+  { vendorId: "vendor-paramount",   peptideSlug: "tesamorelin", price: 95, vialSize: "10mg", inStock: true,  url: "https://paramountpeptides.com/tesamorelin?ref=dosecraft" },
+
+  // Sermorelin
+  { vendorId: "vendor-purerawz",    peptideSlug: "sermorelin", price: 45, vialSize: "5mg",  inStock: true,  url: "https://purerawz.co/sermorelin?ref=dosecraft" },
+  { vendorId: "vendor-stratelabs",  peptideSlug: "sermorelin", price: 50, vialSize: "5mg",  inStock: true,  url: "https://stratelabs.ca/sermorelin?ref=dosecraft" },
+
+  // Semax
+  { vendorId: "vendor-purerawz",    peptideSlug: "semax", price: 35, vialSize: "5mg",  inStock: true,  url: "https://purerawz.co/semax?ref=dosecraft" },
+  { vendorId: "vendor-stratelabs",  peptideSlug: "semax", price: 40, vialSize: "5mg",  inStock: true,  url: "https://stratelabs.ca/semax?ref=dosecraft" },
+
+  // KPV
+  { vendorId: "vendor-paramount",   peptideSlug: "kpv", price: 55, vialSize: "5mg",  inStock: true,  url: "https://paramountpeptides.com/kpv?ref=dosecraft" },
+  { vendorId: "vendor-apex",        peptideSlug: "kpv", price: 48, vialSize: "5mg",  inStock: true,  url: "https://apex-peptides.com/kpv?ref=dosecraft" },
+
+  // SS-31 (Elamipretide)
+  { vendorId: "vendor-apex",        peptideSlug: "ss-31", price: 95, vialSize: "5mg",  inStock: true,  url: "https://apex-peptides.com/ss-31?ref=dosecraft" },
+
+  // DSIP
+  { vendorId: "vendor-purerawz",    peptideSlug: "dsip", price: 32, vialSize: "5mg",  inStock: true,  url: "https://purerawz.co/dsip?ref=dosecraft" },
+  { vendorId: "vendor-stratelabs",  peptideSlug: "dsip", price: 28, vialSize: "5mg",  inStock: true,  url: "https://stratelabs.ca/dsip?ref=dosecraft" },
+
+  // Dihexa
+  { vendorId: "vendor-purerawz",    peptideSlug: "dihexa", price: 55, vialSize: "10mg", inStock: true,  url: "https://purerawz.co/dihexa?ref=dosecraft" },
+
+  // GHRP-6
+  { vendorId: "vendor-stratelabs",  peptideSlug: "ghrp-6", price: 35, vialSize: "5mg",  inStock: true,  url: "https://stratelabs.ca/ghrp-6?ref=dosecraft" },
+  { vendorId: "vendor-purerawz",    peptideSlug: "ghrp-6", price: 30, vialSize: "5mg",  inStock: true,  url: "https://purerawz.co/ghrp-6?ref=dosecraft" },
+
+  // Retatrutide (research phase only)
+  { vendorId: "vendor-apex",        peptideSlug: "retatrutide", price: 180, vialSize: "10mg", inStock: true,  url: "https://apex-peptides.com/retatrutide?ref=dosecraft" },
+  { vendorId: "vendor-stratelabs",  peptideSlug: "retatrutide", price: 200, vialSize: "10mg", inStock: true,  url: "https://stratelabs.ca/retatrutide?ref=dosecraft" },
 ] as const;

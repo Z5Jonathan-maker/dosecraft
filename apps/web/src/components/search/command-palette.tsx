@@ -96,6 +96,10 @@ const GROUP_ORDER: readonly (keyof typeof GROUP_ICONS)[] = [
   "Creators",
 ];
 
+// ── Module-scope search index (built once) ──────────────────────────────────
+
+const SEARCH_INDEX = buildIndex();
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
@@ -107,7 +111,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [recentSearches, setRecentSearches] = useState<readonly string[]>([]);
 
-  const index = useMemo(() => buildIndex(), []);
+  const index = SEARCH_INDEX;
   const results = useMemo(() => filterResults(index, query), [index, query]);
 
   // Group results in stable order
@@ -163,14 +167,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     [onClose, router],
   );
 
-  const handleSuggestionClick = useCallback(
-    (term: string) => {
-      setQuery(term);
-    },
-    [],
-  );
-
-  const handleRecentClick = useCallback(
+  const handleTermClick = useCallback(
     (term: string) => {
       setQuery(term);
     },
@@ -345,7 +342,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                     {recentSearches.map((term) => (
                       <button
                         key={term}
-                        onClick={() => handleRecentClick(term)}
+                        onClick={() => handleTermClick(term)}
                         className="w-full flex items-center gap-3 px-4 py-2 text-sm text-dc-text-muted hover:text-dc-text hover:bg-dc-surface-alt/40 transition-colors text-left"
                       >
                         <Clock className="w-3.5 h-3.5 text-dc-text-faint flex-shrink-0" />
@@ -366,7 +363,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                   {SUGGESTED_SEARCHES.map((term) => (
                     <button
                       key={term}
-                      onClick={() => handleSuggestionClick(term)}
+                      onClick={() => handleTermClick(term)}
                       className="w-full flex items-center gap-3 px-4 py-2 text-sm text-dc-text-muted hover:text-dc-text hover:bg-dc-surface-alt/40 transition-colors text-left"
                     >
                       <Search className="w-3.5 h-3.5 text-dc-text-faint flex-shrink-0" />

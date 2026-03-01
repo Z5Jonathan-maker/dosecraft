@@ -45,22 +45,22 @@ const CATEGORY_LABELS: Record<PeptideCategory, string> = {
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as PeptideCategory[];
 
-const ALL_FDA_STATUSES: FDAStatus[] = [
-  "approved",
-  "phase-3",
-  "phase-2",
-  "phase-1",
-  "research-only",
-  "compoundable",
-  "otc",
-  "supplement",
-  "caution",
-];
+const ALL_FDA_STATUSES = Object.keys(FDA_STATUS_CONFIG) as FDAStatus[];
 
 // ── Sort helpers ──
 
 type SortKey = "name" | "category" | "fdaStatus" | "halfLife";
 type SortDir = "asc" | "desc";
+
+function SortIcon({ column, sortKey, sortDir }: { readonly column: SortKey; readonly sortKey: SortKey; readonly sortDir: SortDir }) {
+  if (sortKey !== column)
+    return <ArrowUpDown className="w-3 h-3 opacity-40" />;
+  return sortDir === "asc" ? (
+    <ArrowUp className="w-3 h-3" />
+  ) : (
+    <ArrowDown className="w-3 h-3" />
+  );
+}
 
 function getPrimaryUse(description: string): string {
   const firstSentence = description.split(". ")[0] ?? description;
@@ -142,16 +142,6 @@ export default function FDATrackerPage() {
     }
     return counts;
   }, []);
-
-  const SortIcon = ({ column }: { readonly column: SortKey }) => {
-    if (sortKey !== column)
-      return <ArrowUpDown className="w-3 h-3 opacity-40" />;
-    return sortDir === "asc" ? (
-      <ArrowUp className="w-3 h-3" />
-    ) : (
-      <ArrowDown className="w-3 h-3" />
-    );
-  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
@@ -274,7 +264,7 @@ export default function FDATrackerPage() {
                   >
                     <div className="flex items-center gap-1.5">
                       {col.label}
-                      <SortIcon column={col.key} />
+                      <SortIcon column={col.key} sortKey={sortKey} sortDir={sortDir} />
                     </div>
                   </th>
                 ))}

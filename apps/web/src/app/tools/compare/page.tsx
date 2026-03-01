@@ -41,21 +41,22 @@ function getResearchDepth(p: Peptide): number {
   return Math.min(100, laneCount * 20 + sourceCount * 5);
 }
 
+const POPULARITY_SCORES: Readonly<Record<string, number>> = {
+  "bpc-157": 95, "tb-500": 85, "cjc-1295-ipamorelin": 90,
+  semaglutide: 98, "testosterone-cypionate": 95, hcg: 80,
+  anastrozole: 75, "mk-677": 82, "pt-141": 70, "ghk-cu": 65,
+  tesamorelin: 72, sermorelin: 68, "ghrp-6": 60, selank: 55,
+  epithalon: 50, "mots-c": 45, "melanotan-ii": 62, dsip: 40,
+  semax: 52, dihexa: 35, "ss-31": 30, "nad-plus": 60,
+  "thymosin-alpha-1": 48, "ll-37": 42, kpv: 38,
+  "bpc-157-oral": 55, enclomiphene: 65, dhea: 58,
+  pregnenolone: 45, "kisspeptin-10": 40, "aod-9604": 55,
+  "testosterone-enanthate": 88, "testosterone-propionate": 60,
+  "cjc-1295-no-dac": 65,
+};
+
 function getPopularity(p: Peptide): number {
-  const popularSlugs: Record<string, number> = {
-    "bpc-157": 95, "tb-500": 85, "cjc-1295-ipamorelin": 90,
-    semaglutide: 98, "testosterone-cypionate": 95, hcg: 80,
-    anastrozole: 75, "mk-677": 82, "pt-141": 70, "ghk-cu": 65,
-    tesamorelin: 72, sermorelin: 68, "ghrp-6": 60, selank: 55,
-    epithalon: 50, "mots-c": 45, "melanotan-ii": 62, dsip: 40,
-    semax: 52, dihexa: 35, "ss-31": 30, "nad-plus": 60,
-    "thymosin-alpha-1": 48, "ll-37": 42, kpv: 38,
-    "bpc-157-oral": 55, enclomiphene: 65, dhea: 58,
-    pregnenolone: 45, "kisspeptin-10": 40, "aod-9604": 55,
-    "testosterone-enanthate": 88, "testosterone-propionate": 60,
-    "cjc-1295-no-dac": 65,
-  };
-  return popularSlugs[p.slug] ?? 40;
+  return POPULARITY_SCORES[p.slug] ?? 40;
 }
 
 function getSafetyProfile(p: Peptide): number {
@@ -64,8 +65,11 @@ function getSafetyProfile(p: Peptide): number {
   return Math.max(20, base - contra * 5);
 }
 
-function getEfficacy(p: Peptide): number {
-  return getConfidence(p);
+function getVersatility(p: Peptide): number {
+  const routeScore = p.route === "oral" ? 30 : p.route === "intranasal" ? 25 : 15;
+  const categoryBonus = ["healing", "growth-hormone", "metabolic"].includes(p.category) ? 20 : 10;
+  const laneScore = p.lanes.length * 15;
+  return Math.min(100, routeScore + categoryBonus + laneScore);
 }
 
 function RadarChart({ data, size = 220 }: { data: RadarData[]; size?: number }) {
@@ -191,14 +195,20 @@ function getStatusBadge(status: string): { label: string; variant: "success" | "
   }
 }
 
-function getFdaStatus(p: Peptide): string {
-  const fdaApproved = ["semaglutide", "pt-141", "testosterone-cypionate", "testosterone-enanthate", "anastrozole", "hcg", "tesamorelin"];
-  const fdaApprovedOther = ["testosterone-propionate", "dhea"];
-  if (fdaApproved.includes(p.slug)) return "FDA Approved";
-  if (fdaApprovedOther.includes(p.slug)) return "FDA Approved (OTC/Rx)";
-  if (p.slug === "sermorelin") return "Previously FDA Approved";
-  if (["selank"].includes(p.slug)) return "Approved in Russia";
-  return "Not FDA Approved";
+const FDA_STATUS_LABELS: Record<string, string> = {
+  approved: "FDA Approved",
+  "phase-3": "Phase 3",
+  "phase-2": "Phase 2",
+  "phase-1": "Phase 1",
+  "research-only": "Research Only",
+  compoundable: "Compoundable",
+  caution: "Caution",
+  supplement: "Supplement",
+  otc: "OTC",
+};
+
+function getFdaStatusLabel(p: Peptide): string {
+  return FDA_STATUS_LABELS[p.fdaStatus] ?? p.fdaStatus;
 }
 
 function getSideEffects(p: Peptide): string {
@@ -319,7 +329,7 @@ export default function PeptideComparePage() {
       { label: "Popularity", peptides: selected.map((p, i) => ({ name: p.name, value: getPopularity(p), color: RADAR_COLORS[i] })) },
       { label: "Research", peptides: selected.map((p, i) => ({ name: p.name, value: getResearchDepth(p), color: RADAR_COLORS[i] })) },
       { label: "Safety", peptides: selected.map((p, i) => ({ name: p.name, value: getSafetyProfile(p), color: RADAR_COLORS[i] })) },
-      { label: "Efficacy", peptides: selected.map((p, i) => ({ name: p.name, value: getEfficacy(p), color: RADAR_COLORS[i] })) },
+      { label: "Versatility", peptides: selected.map((p, i) => ({ name: p.name, value: getVersatility(p), color: RADAR_COLORS[i] })) },
     ];
   }, [selected]);
 
@@ -330,7 +340,7 @@ export default function PeptideComparePage() {
     return [
       { label: "Category", values: selected.map((p) => p.category.replace(/-/g, " ")) },
       { label: "Half-Life", values: selected.map((p) => p.halfLife) },
-      { label: "FDA Status", values: selected.map((p) => getFdaStatus(p)) },
+      { label: "FDA Status", values: selected.map((p) => getFdaStatusLabel(p)) },
       { label: "Primary Benefits", values: selected.map((p) => p.description.split(".")[0] + ".") },
       { label: "Side Effects", values: selected.map((p) => getSideEffects(p)) },
       { label: "Dosing Range", values: selected.map((p) => p.typicalDoseRange) },

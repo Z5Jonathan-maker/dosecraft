@@ -7,6 +7,7 @@ import {
   GitCompareArrows,
   ShieldCheck,
   Layers,
+  DollarSign,
   Wrench,
 } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,13 @@ const TOOLS = [
     href: "/fda-tracker",
     icon: ShieldCheck,
     color: "#b366ff",
+  },
+  {
+    title: "Cost Comparison",
+    description: "Compare estimated monthly costs across research vendors, compounding pharmacies, and telehealth clinics.",
+    href: "/tools/pricing",
+    icon: DollarSign,
+    color: "#00ff88",
   },
   {
     title: "Protocol Builder",

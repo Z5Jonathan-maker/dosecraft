@@ -165,7 +165,7 @@ function VendorCard({
         {expanded && sources.length > 0 && (
           <div className="border-t border-dc-border/40 pt-3 -mx-5 -mb-5 px-5 pb-5 bg-dc-surface/30">
             <div className="space-y-2">
-              {sources
+              {[...sources]
                 .sort((a, b) => a.price - b.price)
                 .map((source) => {
                   const peptide = MOCK_PEPTIDES.find((p) => p.slug === source.peptideSlug);
@@ -248,6 +248,16 @@ export default function SourcesPage() {
       return true;
     });
 
+    // Pre-build price map for O(1) lookups during sort
+    const priceMap = new Map<string, number>();
+    if (peptideFilter && (sortMode === "price-asc" || sortMode === "price-desc")) {
+      for (const s of MOCK_PEPTIDE_SOURCES) {
+        if (s.peptideSlug === peptideFilter) {
+          priceMap.set(s.vendorId, s.price);
+        }
+      }
+    }
+
     return [...filtered].sort((a, b) => {
       switch (sortMode) {
         case "trust":
@@ -256,23 +266,11 @@ export default function SourcesPage() {
           return a.name.localeCompare(b.name);
         case "price-asc": {
           if (!peptideFilter) return 0;
-          const aPrice = MOCK_PEPTIDE_SOURCES.find(
-            (s) => s.vendorId === a.id && s.peptideSlug === peptideFilter,
-          )?.price ?? Infinity;
-          const bPrice = MOCK_PEPTIDE_SOURCES.find(
-            (s) => s.vendorId === b.id && s.peptideSlug === peptideFilter,
-          )?.price ?? Infinity;
-          return aPrice - bPrice;
+          return (priceMap.get(a.id) ?? Infinity) - (priceMap.get(b.id) ?? Infinity);
         }
         case "price-desc": {
           if (!peptideFilter) return 0;
-          const aPriceD = MOCK_PEPTIDE_SOURCES.find(
-            (s) => s.vendorId === a.id && s.peptideSlug === peptideFilter,
-          )?.price ?? 0;
-          const bPriceD = MOCK_PEPTIDE_SOURCES.find(
-            (s) => s.vendorId === b.id && s.peptideSlug === peptideFilter,
-          )?.price ?? 0;
-          return bPriceD - aPriceD;
+          return (priceMap.get(b.id) ?? 0) - (priceMap.get(a.id) ?? 0);
         }
         default:
           return 0;
