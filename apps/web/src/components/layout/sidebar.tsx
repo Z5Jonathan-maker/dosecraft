@@ -13,6 +13,7 @@ import {
   Heart,
   Package,
   BarChart3,
+  MessageCircle,
   Calculator,
   Wrench,
   Menu,
@@ -26,6 +27,10 @@ import {
   Trophy,
   GraduationCap,
   Download,
+  Lightbulb,
+  Newspaper,
+  BookOpenCheck,
+  Bell,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth";
 
@@ -35,17 +40,22 @@ const NAV_ITEMS = [
   { label: "Blends",    href: "/blends",      icon: Beaker,          color: "#b366ff" },
   { label: "Protocols",  href: "/protocols",   icon: Layers,          color: "#ff6b35" },
   { label: "Log",        href: "/log",          icon: ClipboardCheck,  color: "#00ff88" },
+  { label: "Reminders",  href: "/reminders",   icon: Bell,            color: "#ffaa00" },
   { label: "Wellness",  href: "/wellness",    icon: Heart,           color: "#ff6b35" },
   { label: "Inventory",  href: "/inventory",   icon: Package,         color: "#ffaa00" },
   { label: "Rotation",   href: "/injection-sites", icon: MapPin,    color: "#ff4444" },
   { label: "Insights",   href: "/insights",    icon: BarChart3,       color: "#b366ff" },
   { label: "Achievements", href: "/achievements", icon: Trophy,       color: "#ffd700" },
+  { label: "AI Chat",    href: "/chat",         icon: MessageCircle,   color: "#00d4ff" },
   { label: "Calculator", href: "/calculator",  icon: Calculator,      color: "#ffaa00" },
   { label: "Tools",      href: "/tools",       icon: Wrench,          color: "#00d4ff" },
   { label: "Export",     href: "/export",      icon: Download,        color: "#00d4ff" },
   { label: "Sources",    href: "/sources",     icon: ShoppingBag,     color: "#00ff88" },
   { label: "Creators",   href: "/creators",    icon: Star,            color: "#ff4444" },
   { label: "Learn",      href: "/learn",       icon: GraduationCap,   color: "#00d4ff" },
+  { label: "Glossary",   href: "/glossary",    icon: BookOpenCheck,   color: "#b366ff" },
+  { label: "Tips",       href: "/tips",        icon: Lightbulb,       color: "#ffaa00" },
+  { label: "Blog",       href: "/blog",        icon: Newspaper,       color: "#ff6b35" },
   { label: "FDA Tracker", href: "/fda-tracker", icon: ShieldCheck,     color: "#00d4ff" },
 ] as const;
 
