@@ -23,6 +23,9 @@ import {
   ShoppingBag,
   ShieldCheck,
   MapPin,
+  Trophy,
+  GraduationCap,
+  Download,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth";
 
@@ -36,10 +39,13 @@ const NAV_ITEMS = [
   { label: "Inventory",  href: "/inventory",   icon: Package,         color: "#ffaa00" },
   { label: "Rotation",   href: "/injection-sites", icon: MapPin,    color: "#ff4444" },
   { label: "Insights",   href: "/insights",    icon: BarChart3,       color: "#b366ff" },
+  { label: "Achievements", href: "/achievements", icon: Trophy,       color: "#ffd700" },
   { label: "Calculator", href: "/calculator",  icon: Calculator,      color: "#ffaa00" },
   { label: "Tools",      href: "/tools",       icon: Wrench,          color: "#00d4ff" },
+  { label: "Export",     href: "/export",      icon: Download,        color: "#00d4ff" },
   { label: "Sources",    href: "/sources",     icon: ShoppingBag,     color: "#00ff88" },
   { label: "Creators",   href: "/creators",    icon: Star,            color: "#ff4444" },
+  { label: "Learn",      href: "/learn",       icon: GraduationCap,   color: "#00d4ff" },
   { label: "FDA Tracker", href: "/fda-tracker", icon: ShieldCheck,     color: "#00d4ff" },
 ] as const;
 

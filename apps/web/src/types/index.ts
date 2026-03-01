@@ -281,3 +281,20 @@ export interface BlendComponent {
   readonly peptideName: string;
   readonly ratio: string;
 }
+
+// ── Achievements / Badges ──
+export type AchievementTier = "bronze" | "silver" | "gold" | "platinum";
+export type AchievementCategory = "logging" | "protocols" | "learning" | "community" | "milestones";
+
+export interface Achievement {
+  readonly id: string;
+  readonly title: string;
+  readonly description: string;
+  readonly category: AchievementCategory;
+  readonly tier: AchievementTier;
+  readonly icon: string; // emoji
+  readonly requirement: string; // human-readable requirement
+  readonly progress: number; // 0-100
+  readonly unlocked: boolean;
+  readonly unlockedAt?: string; // ISO date
+}
