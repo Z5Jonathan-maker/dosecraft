@@ -25,7 +25,9 @@ export type PeptideCategory =
   | "cosmetic"
   | "neuroprotective"
   | "sleep"
-  | "immune";
+  | "immune"
+  | "hormonal"
+  | "sexual-health";
 
 export type AdministrationRoute =
   | "subcutaneous"
@@ -61,6 +63,7 @@ export interface Protocol {
   readonly duration: string;
   readonly description: string;
   readonly creatorName?: string;
+  readonly creatorId?: string;
   readonly creatorAvatar?: string;
   readonly rating?: number;
   readonly ratingCount?: number;
@@ -143,6 +146,7 @@ export interface ProtocolTimeline {
 // ── Creator ──
 export interface Creator {
   readonly id: string;
+  readonly slug: string;
   readonly name: string;
   readonly bio: string;
   readonly specialty: string;

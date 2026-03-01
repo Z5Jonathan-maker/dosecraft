@@ -14,13 +14,21 @@ const SYRINGE_TYPES = [
 
 type SyringeType = typeof SYRINGE_TYPES[number];
 
+type DoseUnit = "mcg" | "mg";
+
 const COMMON_PEPTIDES = [
-  { name: "BPC-157", typicalVial: "5 mg", typicalWater: 2, typicalDose: 250 },
-  { name: "TB-500", typicalVial: "5 mg", typicalWater: 2, typicalDose: 2500 },
-  { name: "CJC-1295", typicalVial: "2 mg", typicalWater: 2, typicalDose: 200 },
-  { name: "Ipamorelin", typicalVial: "2 mg", typicalWater: 2, typicalDose: 200 },
-  { name: "Semaglutide", typicalVial: "2 mg", typicalWater: 2, typicalDose: 250 },
-  { name: "Epithalon", typicalVial: "10 mg", typicalWater: 2, typicalDose: 5000 },
+  { name: "BPC-157", typicalVial: "5 mg", typicalWater: 2, typicalDose: 250, defaultUnit: "mcg" as DoseUnit },
+  { name: "TB-500", typicalVial: "5 mg", typicalWater: 2, typicalDose: 2500, defaultUnit: "mcg" as DoseUnit },
+  { name: "CJC-1295", typicalVial: "2 mg", typicalWater: 2, typicalDose: 200, defaultUnit: "mcg" as DoseUnit },
+  { name: "Ipamorelin", typicalVial: "2 mg", typicalWater: 2, typicalDose: 200, defaultUnit: "mcg" as DoseUnit },
+  { name: "Semaglutide", typicalVial: "2 mg", typicalWater: 2, typicalDose: 250, defaultUnit: "mcg" as DoseUnit },
+  { name: "Epithalon", typicalVial: "10 mg", typicalWater: 2, typicalDose: 5000, defaultUnit: "mcg" as DoseUnit },
+  { name: "Testosterone Cyp", typicalVial: "2000 mg", typicalWater: 10, typicalDose: 100, defaultUnit: "mg" as DoseUnit },
+  { name: "Testosterone Enan", typicalVial: "2500 mg", typicalWater: 10, typicalDose: 125, defaultUnit: "mg" as DoseUnit },
+  { name: "HCG", typicalVial: "5 mg", typicalWater: 2, typicalDose: 500, defaultUnit: "mcg" as DoseUnit },
+  { name: "Tesamorelin", typicalVial: "2 mg", typicalWater: 3, typicalDose: 2000, defaultUnit: "mcg" as DoseUnit },
+  { name: "Sermorelin", typicalVial: "2 mg", typicalWater: 2, typicalDose: 200, defaultUnit: "mcg" as DoseUnit },
+  { name: "MK-677", typicalVial: "25 mg", typicalWater: 2, typicalDose: 25, defaultUnit: "mg" as DoseUnit },
 ] as const;
 
 export default function CalculatorPage() {
@@ -29,7 +37,8 @@ export default function CalculatorPage() {
   const [waterMl, setWaterMl] = useState("");
 
   // Dose inputs
-  const [desiredDoseMcg, setDesiredDoseMcg] = useState("");
+  const [desiredDose, setDesiredDose] = useState("");
+  const [doseUnit, setDoseUnit] = useState<DoseUnit>("mcg");
   const [selectedSyringe, setSelectedSyringe] = useState<SyringeType>(SYRINGE_TYPES[2]);
 
   // Auto-fill from peptide
@@ -40,7 +49,8 @@ export default function CalculatorPage() {
     if (p) {
       setVialMg(p.typicalVial.replace(" mg", ""));
       setWaterMl(p.typicalWater.toString());
-      setDesiredDoseMcg(p.typicalDose.toString());
+      setDoseUnit(p.defaultUnit);
+      setDesiredDose(p.typicalDose.toString());
       setSelectedPeptide(name);
     }
   };
@@ -59,13 +69,14 @@ export default function CalculatorPage() {
   // Dose calculations
   const doseResult = useMemo(() => {
     if (!reconResult) return null;
-    const desired = parseFloat(desiredDoseMcg);
-    if (isNaN(desired) || desired <= 0) return null;
-    const mlNeeded = desired / reconResult.mcgPerMl;
+    const raw = parseFloat(desiredDose);
+    if (isNaN(raw) || raw <= 0) return null;
+    const desiredMcg = doseUnit === "mg" ? raw * 1000 : raw;
+    const mlNeeded = desiredMcg / reconResult.mcgPerMl;
     const unitsNeeded = mlNeeded * 100;
     const percentOfSyringe = (unitsNeeded / selectedSyringe.units) * 100;
     return { mlNeeded, unitsNeeded, percentOfSyringe };
-  }, [reconResult, desiredDoseMcg, selectedSyringe]);
+  }, [reconResult, desiredDose, doseUnit, selectedSyringe]);
 
   const doseWarning = doseResult && doseResult.percentOfSyringe > 100
     ? "This dose exceeds your selected syringe capacity. Use a larger syringe or split into two injections."
@@ -210,18 +221,42 @@ export default function CalculatorPage() {
 
             <div className="space-y-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-dc-text-muted uppercase tracking-wide">Desired Dose (mcg)</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-dc-text-muted uppercase tracking-wide">Desired Dose</label>
+                  <div className="flex rounded-lg border border-dc-border overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setDoseUnit("mcg")}
+                      className={clsx(
+                        "px-2.5 py-1 text-[10px] font-bold transition-colors",
+                        doseUnit === "mcg" ? "bg-dc-accent/15 text-dc-accent" : "text-dc-text-muted hover:text-dc-text",
+                      )}
+                    >
+                      mcg
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDoseUnit("mg")}
+                      className={clsx(
+                        "px-2.5 py-1 text-[10px] font-bold transition-colors",
+                        doseUnit === "mg" ? "bg-dc-accent/15 text-dc-accent" : "text-dc-text-muted hover:text-dc-text",
+                      )}
+                    >
+                      mg
+                    </button>
+                  </div>
+                </div>
                 <div className="relative">
                   <input
                     type="number"
-                    value={desiredDoseMcg}
-                    onChange={(e) => setDesiredDoseMcg(e.target.value)}
-                    placeholder="e.g. 250"
-                    step="1"
+                    value={desiredDose}
+                    onChange={(e) => setDesiredDose(e.target.value)}
+                    placeholder={doseUnit === "mg" ? "e.g. 100" : "e.g. 250"}
+                    step={doseUnit === "mg" ? "0.1" : "1"}
                     min="0"
                     className="w-full px-4 py-3 pr-16 rounded-xl text-sm text-dc-text bg-dc-surface border border-dc-border placeholder:text-dc-text-muted/40 focus:outline-none focus:border-dc-accent focus:ring-2 focus:ring-dc-accent/15 transition-all mono"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-dc-text-muted">mcg</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-dc-text-muted">{doseUnit}</span>
                 </div>
               </div>
 

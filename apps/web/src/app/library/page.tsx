@@ -16,6 +16,8 @@ const CATEGORIES: { value: PeptideCategory; label: string }[] = [
   { value: "neuroprotective", label: "Neuroprotective" },
   { value: "sleep", label: "Sleep" },
   { value: "immune", label: "Immune" },
+  { value: "hormonal", label: "Hormonal" },
+  { value: "sexual-health", label: "Sexual Health" },
 ];
 
 const LANES: { value: EvidenceLane; label: string; color: string }[] = [

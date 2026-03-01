@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LaneBadge } from "@/components/peptide/lane-badge";
-import { Clock, Syringe, Star, Users, ArrowUpRight } from "lucide-react";
+import { Clock, Syringe, Star, Users, ArrowUpRight, CheckCircle2 } from "lucide-react";
 import type { Protocol, ProtocolIntensity } from "@/types";
 import clsx from "clsx";
 
@@ -48,6 +48,16 @@ export function ProtocolCard({ protocol, showProgress = false }: ProtocolCardPro
             {protocol.intensity}
           </Badge>
         </div>
+
+        {/* Creator byline */}
+        {protocol.creatorName && (
+          <div className="flex items-center gap-1.5 mb-2">
+            <CheckCircle2 className="w-3 h-3 text-dc-neon-green" />
+            <span className="text-[11px] text-dc-text-muted">
+              by <span className="text-dc-text font-medium">{protocol.creatorName}</span>
+            </span>
+          </div>
+        )}
 
         {/* Description */}
         <p className="text-xs text-dc-text-muted leading-relaxed mb-3 line-clamp-2 flex-1">

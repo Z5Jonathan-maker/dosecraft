@@ -5,7 +5,7 @@ import { Calendar, ClipboardCheck, Plus, MapPin, Syringe, Clock, ChevronLeft, Ch
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DoseChecklist } from "@/components/tracking/dose-checklist";
-import { MOCK_DAILY_DOSES, MOCK_OUTCOMES, INJECTION_SITES } from "@/lib/mock-data";
+import { MOCK_DAILY_DOSES, MOCK_OUTCOMES, INJECTION_SITES, MOCK_PEPTIDES } from "@/lib/mock-data";
 import clsx from "clsx";
 
 const DAYS_OF_WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
@@ -20,16 +20,7 @@ const WEEK_DATA = [
   { day: "Sun", compliance: 0,   taken: 0, total: 5 },
 ] as const;
 
-const PEPTIDE_OPTIONS = [
-  "BPC-157",
-  "TB-500",
-  "CJC-1295 / Ipamorelin",
-  "Semaglutide",
-  "GHK-Cu",
-  "Epithalon",
-  "PT-141",
-  "Selank",
-];
+const PEPTIDE_OPTIONS = MOCK_PEPTIDES.map((p) => p.name);
 
 const UNIT_OPTIONS = ["mcg", "mg", "IU", "mL"] as const;
 
@@ -190,7 +181,12 @@ export default function LogPage() {
                 <label className="text-xs font-medium text-dc-text-muted uppercase tracking-wide">Compound</label>
                 <select
                   value={quickLog.peptide}
-                  onChange={(e) => setQuickLog({ ...quickLog, peptide: e.target.value })}
+                  onChange={(e) => {
+                    const name = e.target.value;
+                    const compound = MOCK_PEPTIDES.find((p) => p.name === name);
+                    const unit = compound?.category === "hormonal" ? "mg" : "mcg";
+                    setQuickLog({ ...quickLog, peptide: name, unit });
+                  }}
                   required
                   className="w-full px-3 py-2.5 rounded-xl text-sm text-dc-text bg-dc-surface border border-dc-border focus:outline-none focus:border-dc-accent focus:ring-2 focus:ring-dc-accent/15 transition-all"
                 >
